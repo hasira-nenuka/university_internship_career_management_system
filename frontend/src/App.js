@@ -1,28 +1,56 @@
 import React from 'react';
-import TaskForm from './components/TaskForm';
-import TaskList from './components/TaskList';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './components/HomePage/Home.jsx';  // Note the .jsx extension
 import './App.css';
 
 function App() {
-    const handleTaskAdded = (newTask) => {
-        console.log('New task added:', newTask);
-    };
-
-    return (
-        <div className="App">
-            <header className="App-header">
-                <h1>📝 Task Manager</h1>
-                <p>Manage your tasks efficiently</p>
-            </header>
-            <main className="App-main">
-                <TaskForm onTaskAdded={handleTaskAdded} />
-                <TaskList />
-            </main>
-            <footer className="App-footer">
-                <p>MERN Stack Application | Built with React, Node.js, Express & MongoDB</p>
-            </footer>
-        </div>
-    );
+  return (
+    <Router>
+      <div className="App">
+        <Routes>
+          {/* Home Route */}
+          <Route path="/" element={<Home />} />
+          
+          {/* Auth Routes - Placeholder pages */}
+          <Route path="/login/student" element={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold mb-4">Student Login</h1>
+                <p className="text-gray-600">Login page coming soon...</p>
+              </div>
+            </div>
+          } />
+          
+          <Route path="/login/company" element={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold mb-4">Company Login</h1>
+                <p className="text-gray-600">Login page coming soon...</p>
+              </div>
+            </div>
+          } />
+          
+          <Route path="/register/student" element={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold mb-4">Student Registration</h1>
+                <p className="text-gray-600">Registration page coming soon...</p>
+              </div>
+            </div>
+          } />
+          
+          <Route path="/register/company" element={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-3xl font-bold mb-4">Company Registration</h1>
+                <p className="text-gray-600">Registration page coming soon...</p>
+              </div>
+            </div>
+          } />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
 export default App;
