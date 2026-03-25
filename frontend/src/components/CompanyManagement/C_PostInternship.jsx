@@ -1,6 +1,53 @@
 import React, { useState } from 'react';
 import { postInternship, uploadImage } from './C_CompanyUtils';
 
+const JOB_CATEGORIES = [
+    'Frontend Developer',
+    'Backend Developer',
+    'Full Stack Developer',
+    'Mobile App Developer',
+    'QA Engineer',
+    'Software Tester',
+    'Automation Tester',
+    'DevOps Engineer',
+    'Cloud Engineer',
+    'System Administrator',
+    'Data Analyst',
+    'Data Scientist',
+    'Machine Learning Engineer',
+    'UI/UX Designer',
+    'Project Manager',
+    'Product Manager',
+    'Business Analyst',
+    'Cybersecurity Analyst'
+];
+
+const DISTRICTS = [
+    'Colombo', 'Gampaha', 'Kalutara',
+    'Kandy', 'Matale', 'Nuwara Eliya',
+    'Galle', 'Matara', 'Hambantota',
+    'Jaffna', 'Kilinochchi', 'Mannar', 'Vavuniya', 'Mullaitivu',
+    'Batticaloa', 'Ampara', 'Trincomalee',
+    'Kurunegala', 'Puttalam',
+    'Anuradhapura', 'Polonnaruwa',
+    'Badulla', 'Moneragala',
+    'Ratnapura', 'Kegalle'
+];
+
+const getTomorrowDateString = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+};
+
+const isFutureDate = (dateString) => {
+    const selectedDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    return selectedDate > today;
+};
+
 const C_PostInternship = ({ onSuccess }) => {
     const [formData, setFormData] = useState({
         title: '',
@@ -22,9 +69,15 @@ const C_PostInternship = ({ onSuccess }) => {
     const [success, setSuccess] = useState('');
 
     const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        if ((name === 'stipend' || name === 'openings') && !/^\d*$/.test(value)) {
+            return;
+        }
+
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: value
         });
     };
 
@@ -56,6 +109,24 @@ const C_PostInternship = ({ onSuccess }) => {
         setLoading(true);
         setError('');
         setSuccess('');
+
+        if (!formData.stipend || Number(formData.stipend) < 0) {
+            setError('Stipend must be a valid non-negative number');
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.openings || Number(formData.openings) < 1) {
+            setError('Number of openings must be at least 1');
+            setLoading(false);
+            return;
+        }
+
+        if (!isFutureDate(formData.deadline)) {
+            setError('Application deadline must be a future date');
+            setLoading(false);
+            return;
+        }
         
         try {
             const companyId = localStorage.getItem('companyId');
@@ -94,8 +165,8 @@ const C_PostInternship = ({ onSuccess }) => {
                 });
                 setImages([]);
                 setTimeout(() => {
-                    if (onSuccess) onSuccess();
-                }, 2000);
+                    if (onSuccess) onSuccess(result.data);
+                }, 1200);
             }
         } catch (err) {
             setError(err.message || 'Failed to post internship');
@@ -105,17 +176,17 @@ const C_PostInternship = ({ onSuccess }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-2xl font-bold mb-6">Post New Internship</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 border dark:border-slate-700">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Post New Internship</h2>
             
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 px-4 py-3 rounded-lg mb-6">
                     {error}
                 </div>
             )}
             
             {success && (
-                <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg mb-6">
+                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-300 px-4 py-3 rounded-lg mb-6">
                     {success}
                 </div>
             )}
@@ -123,37 +194,43 @@ const C_PostInternship = ({ onSuccess }) => {
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Internship Title *
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name="title"
                             value={formData.title}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                            placeholder="e.g., Software Development Intern"
-                        />
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">Select Job Category</option>
+                            {JOB_CATEGORIES.map((category) => (
+                                <option key={category} value={category}>{category}</option>
+                            ))}
+                        </select>
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Location *
                         </label>
-                        <input
-                            type="text"
+                        <select
                             name="location"
                             value={formData.location}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                            placeholder="e.g., New York, NY or Remote"
-                        />
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value="">Select District</option>
+                            {DISTRICTS.map((district) => (
+                                <option key={district} value={district}>{district}</option>
+                            ))}
+                        </select>
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Internship Type *
                         </label>
                         <select
@@ -161,7 +238,7 @@ const C_PostInternship = ({ onSuccess }) => {
                             value={formData.type}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         >
                             <option value="Full-time">Full-time</option>
                             <option value="Part-time">Part-time</option>
@@ -171,7 +248,7 @@ const C_PostInternship = ({ onSuccess }) => {
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Duration *
                         </label>
                         <input
@@ -190,18 +267,26 @@ const C_PostInternship = ({ onSuccess }) => {
                             Stipend *
                         </label>
                         <input
-                            type="text"
+                            type="number"
                             name="stipend"
                             value={formData.stipend}
                             onChange={handleChange}
                             required
+                            min="0"
+                            inputMode="numeric"
+                            onKeyDown={(e) => {
+                                if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                                    e.preventDefault();
+                                }
+                            }}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                            placeholder="e.g., $2000/month or Unpaid"
+                            placeholder="e.g., 2000"
                         />
+                        <p className="text-sm text-gray-500 mt-1">Enter stipend amount using numbers only</p>
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Number of Openings *
                         </label>
                         <input
@@ -211,12 +296,18 @@ const C_PostInternship = ({ onSuccess }) => {
                             onChange={handleChange}
                             required
                             min="1"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            inputMode="numeric"
+                            onKeyDown={(e) => {
+                                if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                                    e.preventDefault();
+                                }
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         />
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Application Deadline *
                         </label>
                         <input
@@ -225,12 +316,14 @@ const C_PostInternship = ({ onSuccess }) => {
                             value={formData.deadline}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            min={getTomorrowDateString()}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         />
+                        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Deadline must be a future date</p>
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                             Upload Images (JPEG/JPG)
                         </label>
                         <input
@@ -239,11 +332,11 @@ const C_PostInternship = ({ onSuccess }) => {
                             multiple
                             onChange={handleImageUpload}
                             disabled={uploading}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         />
-                        {uploading && <p className="text-sm text-gray-500 mt-1">Uploading images...</p>}
+                        {uploading && <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Uploading images...</p>}
                         {images.length > 0 && (
-                            <p className="text-sm text-green-600 mt-1">
+                            <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                                 ✓ {images.length} image(s) uploaded successfully
                             </p>
                         )}
@@ -251,7 +344,7 @@ const C_PostInternship = ({ onSuccess }) => {
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         Description *
                     </label>
                     <textarea
@@ -260,13 +353,13 @@ const C_PostInternship = ({ onSuccess }) => {
                         onChange={handleChange}
                         required
                         rows="5"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         placeholder="Describe the internship role, responsibilities, learning opportunities, and what makes this internship unique..."
                     ></textarea>
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         Requirements (comma-separated) *
                     </label>
                     <textarea
@@ -275,14 +368,14 @@ const C_PostInternship = ({ onSuccess }) => {
                         onChange={handleChange}
                         required
                         rows="3"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         placeholder="e.g., Bachelor's degree in Computer Science, Strong programming skills, Good communication, Team player"
                     ></textarea>
-                    <p className="text-sm text-gray-500 mt-1">Separate each requirement with a comma</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Separate each requirement with a comma</p>
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         Required Skills (comma-separated) *
                     </label>
                     <textarea
@@ -291,10 +384,10 @@ const C_PostInternship = ({ onSuccess }) => {
                         onChange={handleChange}
                         required
                         rows="3"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         placeholder="e.g., JavaScript, React, Node.js, Python, MongoDB"
                     ></textarea>
-                    <p className="text-sm text-gray-500 mt-1">Separate each skill with a comma</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Separate each skill with a comma</p>
                 </div>
                 
                 <button

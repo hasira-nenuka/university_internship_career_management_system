@@ -14,11 +14,11 @@ const getAuthHeader = () => {
 // Company Registration
 export const registerCompany = async (companyData) => {
     try {
-        const response = await axios.post(`${API_URL}/companies/register`, companyData);
+        const response = await axios.post(`${API_URL}/company/register`, companyData);
         if (response.data.success) {
             localStorage.setItem('companyToken', response.data.token);
-            localStorage.setItem('companyId', response.data.company._id);
-            localStorage.setItem('companyName', response.data.company.companyName);
+            localStorage.setItem('companyId', response.data.data.id);
+            localStorage.setItem('companyName', response.data.data.companyName);
         }
         return response.data;
     } catch (error) {
@@ -29,11 +29,11 @@ export const registerCompany = async (companyData) => {
 // Company Login
 export const loginCompany = async (email, password) => {
     try {
-        const response = await axios.post(`${API_URL}/companies/login`, { email, password });
+        const response = await axios.post(`${API_URL}/company/login`, { email, password });
         if (response.data.success) {
             localStorage.setItem('companyToken', response.data.token);
-            localStorage.setItem('companyId', response.data.company._id);
-            localStorage.setItem('companyName', response.data.company.companyName);
+            localStorage.setItem('companyId', response.data.data.id);
+            localStorage.setItem('companyName', response.data.data.companyName);
         }
         return response.data;
     } catch (error) {
@@ -45,7 +45,7 @@ export const loginCompany = async (email, password) => {
 export const getCompanyProfile = async () => {
     try {
         const companyId = localStorage.getItem('companyId');
-        const response = await axios.get(`${API_URL}/companies/${companyId}`, getAuthHeader());
+        const response = await axios.get(`${API_URL}/company/${companyId}`, getAuthHeader());
         return response.data;
     } catch (error) {
         throw error.response?.data || { message: 'Failed to fetch profile' };
@@ -56,7 +56,7 @@ export const getCompanyProfile = async () => {
 export const updateCompanyProfile = async (profileData) => {
     try {
         const companyId = localStorage.getItem('companyId');
-        const response = await axios.put(`${API_URL}/companies/${companyId}`, profileData, getAuthHeader());
+        const response = await axios.put(`${API_URL}/company/${companyId}`, profileData, getAuthHeader());
         return response.data;
     } catch (error) {
         throw error.response?.data || { message: 'Failed to update profile' };
@@ -169,5 +169,33 @@ export const uploadImage = async (file) => {
         return response.data;
     } catch (error) {
         throw error.response?.data || { message: 'Failed to upload image' };
+    }
+};
+
+// Get Company Pro Account Status
+export const getCompanyProAccount = async () => {
+    try {
+        const companyId = localStorage.getItem('companyId');
+        const response = await axios.get(`${API_URL}/pro-accounts/company/${companyId}`, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to fetch pro account status' };
+    }
+};
+
+// Direct Student Search (Pro Account)
+export const searchStudentsDirectly = async (category, district) => {
+    try {
+        const companyId = localStorage.getItem('companyId');
+        const response = await axios.get(
+            `${API_URL}/company/${companyId}/search-students`,
+            {
+                ...getAuthHeader(),
+                params: { category, district }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to search students' };
     }
 };

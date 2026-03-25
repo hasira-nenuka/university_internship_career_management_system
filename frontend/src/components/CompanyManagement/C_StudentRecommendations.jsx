@@ -1,13 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { getStudentRecommendations, getMatchSummary } from './C_CompanyUtils';
+import { useNavigate } from 'react-router-dom';
+import { getCompanyProAccount, getStudentRecommendations, searchStudentsDirectly } from './C_CompanyUtils';
 import C_MatchSummary from './C_MatchSummary';
 
+const JOB_CATEGORIES = [
+    'Frontend Developer',
+    'Backend Developer',
+    'Full Stack Developer',
+    'Mobile App Developer',
+    'QA Engineer',
+    'Software Tester',
+    'Automation Tester',
+    'DevOps Engineer',
+    'Cloud Engineer',
+    'System Administrator',
+    'Data Analyst',
+    'Data Scientist',
+    'Machine Learning Engineer',
+    'UI/UX Designer',
+    'Project Manager',
+    'Product Manager',
+    'Business Analyst',
+    'Cybersecurity Analyst'
+];
+
+const DISTRICTS = [
+    'Colombo', 'Gampaha', 'Kalutara',
+    'Kandy', 'Matale', 'Nuwara Eliya',
+    'Galle', 'Matara', 'Hambantota',
+    'Jaffna', 'Kilinochchi', 'Mannar', 'Vavuniya', 'Mullaitivu',
+    'Batticaloa', 'Ampara', 'Trincomalee',
+    'Kurunegala', 'Puttalam',
+    'Anuradhapura', 'Polonnaruwa',
+    'Badulla', 'Moneragala',
+    'Ratnapura', 'Kegalle'
+];
+
 const C_StudentRecommendations = ({ internships }) => {
+    const navigate = useNavigate();
     const [selectedInternship, setSelectedInternship] = useState('');
     const [recommendations, setRecommendations] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [proStatus, setProStatus] = useState(null);
+    const [directSearch, setDirectSearch] = useState({ category: '', district: '' });
+    const [directResults, setDirectResults] = useState([]);
+    const [directLoading, setDirectLoading] = useState(false);
+    const [directError, setDirectError] = useState('');
+
+    const isProActive = Boolean(proStatus?.isProActive);
+
+    useEffect(() => {
+        const fetchProStatus = async () => {
+            try {
+                const result = await getCompanyProAccount();
+                setProStatus(result.data);
+            } catch (err) {
+                setProStatus({ isProActive: false, status: 'inactive' });
+            }
+        };
+
+        fetchProStatus();
+    }, []);
 
     const fetchRecommendations = async () => {
         if (!selectedInternship) return;
@@ -31,6 +86,26 @@ const C_StudentRecommendations = ({ internships }) => {
         }
     }, [selectedInternship]);
 
+    const handleDirectSearch = async () => {
+        if (!directSearch.category || !directSearch.district) {
+            setDirectError('Please select both job category and district');
+            return;
+        }
+
+        setDirectLoading(true);
+        setDirectError('');
+
+        try {
+            const result = await searchStudentsDirectly(directSearch.category, directSearch.district);
+            setDirectResults(result.data || []);
+        } catch (err) {
+            setDirectResults([]);
+            setDirectError(err.message || 'Failed to fetch direct search results');
+        } finally {
+            setDirectLoading(false);
+        }
+    };
+
     const getScoreColor = (score) => {
         if (score >= 80) return 'text-green-600';
         if (score >= 60) return 'text-yellow-600';
@@ -45,22 +120,115 @@ const C_StudentRecommendations = ({ internships }) => {
 
     return (
         <div className="space-y-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 border dark:border-slate-700">
+                <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Direct Student Search</h2>
+                <p className="text-gray-600 dark:text-slate-400 mb-4">
+                    Search students directly using job category and district.
+                </p>
+
+                {!isProActive ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-amber-800 text-sm">
+                            This feature is available only for Pro accounts. Upgrade to Pro to unlock unlimited direct search.
+                        </p>
+                        <button
+                            onClick={() => navigate('/payments/pro-upgrade', {
+                                state: {
+                                    companyId: localStorage.getItem('companyId'),
+                                    companyName: localStorage.getItem('companyName') || ''
+                                }
+                            })}
+                            className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                        >
+                            Upgrade to Pro
+                        </button>
+                    </div>
+                ) : (
+                    <div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <select
+                                value={directSearch.category}
+                                onChange={(e) => setDirectSearch({ ...directSearch, category: e.target.value })}
+                                className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                            >
+                                <option value="">Select job category</option>
+                                {JOB_CATEGORIES.map((category) => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={directSearch.district}
+                                onChange={(e) => setDirectSearch({ ...directSearch, district: e.target.value })}
+                                className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                            >
+                                <option value="">Select district</option>
+                                {DISTRICTS.map((district) => (
+                                    <option key={district} value={district}>{district}</option>
+                                ))}
+                            </select>
+
+                            <button
+                                onClick={handleDirectSearch}
+                                disabled={directLoading}
+                                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-60"
+                            >
+                                {directLoading ? 'Searching...' : 'Find Students'}
+                            </button>
+                        </div>
+
+                        {directError && (
+                            <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+                                {directError}
+                            </div>
+                        )}
+
+                        {directResults.length > 0 && (
+                            <div className="mt-4 space-y-3">
+                                {directResults.map((student) => (
+                                    <div key={student.id} className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-gray-50 dark:bg-slate-700/40">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-semibold text-gray-900 dark:text-white">
+                                                    {student.firstName} {student.lastName}
+                                                </h4>
+                                                <p className="text-sm text-gray-600 dark:text-slate-300">{student.email}</p>
+                                                <p className="text-sm text-gray-600 dark:text-slate-300">{student.contactNumber}</p>
+                                                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">District: {student.district || 'N/A'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold text-emerald-600">{Math.round(student.matchScore)}%</div>
+                                                <div className="text-xs text-gray-500">Match</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {!directLoading && !directError && directResults.length === 0 && (
+                            <p className="mt-3 text-sm text-gray-500 dark:text-slate-400">No direct search results yet.</p>
+                        )}
+                    </div>
+                )}
+            </div>
+
             {/* Internship Selection */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-2xl font-bold mb-4">AI-Powered Student Matching</h2>
-                <p className="text-gray-600 mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 border dark:border-slate-700">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">AI-Powered Student Matching</h2>
+                <p className="text-gray-600 dark:text-slate-400 mb-6">
                     Our intelligent matching algorithm analyzes student profiles against your internship requirements
                     to find the most suitable candidates. Select an internship to see the results.
                 </p>
                 
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         Select Internship for Matching
                     </label>
                     <select
                         value={selectedInternship}
                         onChange={(e) => setSelectedInternship(e.target.value)}
-                        className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full md:w-1/2 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">Choose an internship...</option>
                         {internships.filter(i => i.status === 'active').map(internship => (
@@ -70,7 +238,7 @@ const C_StudentRecommendations = ({ internships }) => {
                         ))}
                     </select>
                     {internships.filter(i => i.status === 'active').length === 0 && (
-                        <p className="text-sm text-yellow-600 mt-2">
+                        <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
                             No active internships found. Please post an internship first.
                         </p>
                     )}

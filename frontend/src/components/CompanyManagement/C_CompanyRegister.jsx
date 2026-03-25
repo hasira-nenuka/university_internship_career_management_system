@@ -79,9 +79,9 @@ const C_CompanyRegister = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-900 dark:to-slate-800 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden">
                     <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-8">
                         <h2 className="text-3xl font-bold text-white">Company Registration</h2>
                         <p className="text-indigo-100 mt-2">Join StepIn and find talented interns</p>
@@ -89,13 +89,13 @@ const C_CompanyRegister = () => {
                     
                     <form onSubmit={handleSubmit} className="p-8 space-y-6">
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 px-4 py-3 rounded-lg">
                                 {error}
                             </div>
                         )}
                         
                         {success && (
-                            <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+                            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-300 px-4 py-3 rounded-lg">
                                 {success}
                             </div>
                         )}

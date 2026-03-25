@@ -52,20 +52,20 @@ const C_ApplicationManagement = ({ internships }) => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-2xl font-bold mb-4">Application Management</h2>
-                <p className="text-gray-600 mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 border dark:border-slate-700">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Application Management</h2>
+                <p className="text-gray-600 dark:text-slate-400 mb-6">
                     Review and manage student applications for your internships.
                 </p>
                 
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         Select Internship
                     </label>
                     <select
                         value={selectedInternship}
                         onChange={(e) => setSelectedInternship(e.target.value)}
-                        className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        className="w-full md:w-1/2 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">Choose an internship...</option>
                         {internships.map(internship => (
@@ -80,18 +80,18 @@ const C_ApplicationManagement = ({ internships }) => {
             {loading && (
                 <div className="text-center py-12">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
-                    <p className="text-gray-600">Loading applications...</p>
+                    <p className="text-gray-600 dark:text-slate-400">Loading applications...</p>
                 </div>
             )}
             
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 px-4 py-3 rounded-lg">
                     {error}
                 </div>
             )}
             
             {!loading && selectedInternship && applications.length === 0 && !error && (
-                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+                <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300 px-4 py-3 rounded-lg">
                     No applications received for this internship yet.
                 </div>
             )}
@@ -99,19 +99,19 @@ const C_ApplicationManagement = ({ internships }) => {
             {!loading && applications.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-xl font-semibold">Applications ({applications.length})</h3>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Applications ({applications.length})</h3>
                         <div className="flex space-x-2">
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-slate-400">
                                 Pending: {applications.filter(a => a.status === 'pending').length}
                             </span>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-slate-400">
                                 Shortlisted: {applications.filter(a => a.status === 'shortlisted').length}
                             </span>
                         </div>
                     </div>
                     
                     {applications.map((app) => (
-                        <div key={app._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                        <div key={app._id} className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 hover:shadow-lg dark:hover:shadow-xl transition-shadow border dark:border-slate-700">
                             <div className="flex justify-between items-start">
                                 <div className="flex-1">
                                     <div className="flex items-center space-x-4">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getCompanyProfile, getCompanyInternships, logoutCompany } from './C_CompanyUtils';
 import C_PostInternship from './C_PostInternship';
 import C_InternshipList from './C_InternshipList';
@@ -9,15 +9,27 @@ import C_ApplicationManagement from './C_ApplicationManagement';
 
 const C_CompanyDashboard = () => {
     const navigate = useNavigate();
+    const { state } = useLocation();
     const [activeTab, setActiveTab] = useState('overview');
     const [companyData, setCompanyData] = useState(null);
     const [internships, setInternships] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (state?.activeTab) {
+            setActiveTab(state.activeTab);
+        }
+    }, [state]);
+
+    useEffect(() => {
         const token = localStorage.getItem('companyToken');
         if (!token) {
-            navigate('/login/company');
+            // UI preview mode: allow dashboard rendering without auth token.
+            setCompanyData({
+                companyName: localStorage.getItem('companyName') || 'Demo Company'
+            });
+            setInternships([]);
+            setLoading(false);
             return;
         }
         
@@ -60,8 +72,8 @@ const C_CompanyDashboard = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-xl text-gray-600">Loading...</div>
+            <div className="min-h-screen dark:bg-slate-900 flex items-center justify-center">
+                <div className="text-xl text-gray-600 dark:text-slate-300">Loading...</div>
             </div>
         );
     }
@@ -70,20 +82,20 @@ const C_CompanyDashboard = () => {
     const totalApplications = internships.reduce((sum, i) => sum + (i.applications?.length || 0), 0);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen dark:bg-slate-900 bg-gray-50">
             {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-10">
+            <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10 border-b dark:border-slate-700">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-4">
                             <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                                 StepIn Company Portal
                             </h1>
-                            <span className="text-gray-600">|</span>
-                            <span className="text-gray-600 font-medium">{companyData?.companyName}</span>
+                            <span className="text-gray-600 dark:text-slate-400">|</span>
+                            <span className="text-gray-600 dark:text-slate-400 font-medium">{companyData?.companyName}</span>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-gray-500 dark:text-slate-400">
                                 Welcome, {companyData?.companyName}
                             </span>
                             <button
@@ -98,7 +110,7 @@ const C_CompanyDashboard = () => {
             </header>
 
             {/* Navigation Tabs */}
-            <div className="border-b border-gray-200 bg-white sticky top-[73px] z-10">
+            <div className="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-[73px] z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <nav className="flex space-x-8 overflow-x-auto">
                         {[
@@ -112,10 +124,10 @@ const C_CompanyDashboard = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 whitespace-nowrap ${
+                                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 whitespace-nowrap transition ${
                                     activeTab === tab.id
-                                        ? 'border-indigo-500 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
                                 }`}
                             >
                                 <span>{tab.icon}</span>
@@ -132,40 +144,40 @@ const C_CompanyDashboard = () => {
                     <div className="space-y-6">
                         {/* Stats Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 hover:shadow-lg dark:hover:shadow-xl transition-shadow border dark:border-slate-700">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="text-3xl font-bold text-indigo-600">{internships.length}</div>
-                                        <div className="text-gray-600 mt-1">Total Internships</div>
+                                        <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{internships.length}</div>
+                                        <div className="text-gray-600 dark:text-slate-400 mt-1">Total Internships</div>
                                     </div>
                                     <div className="text-4xl">💼</div>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 hover:shadow-lg dark:hover:shadow-xl transition-shadow border dark:border-slate-700">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="text-3xl font-bold text-green-600">{activeInternships.length}</div>
-                                        <div className="text-gray-600 mt-1">Active Internships</div>
+                                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">{activeInternships.length}</div>
+                                        <div className="text-gray-600 dark:text-slate-400 mt-1">Active Internships</div>
                                     </div>
                                     <div className="text-4xl">✅</div>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 hover:shadow-lg dark:hover:shadow-xl transition-shadow border dark:border-slate-700">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="text-3xl font-bold text-purple-600">{totalApplications}</div>
-                                        <div className="text-gray-600 mt-1">Total Applications</div>
+                                        <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalApplications}</div>
+                                        <div className="text-gray-600 dark:text-slate-400 mt-1">Total Applications</div>
                                     </div>
                                     <div className="text-4xl">📋</div>
                                 </div>
                             </div>
-                            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 hover:shadow-lg dark:hover:shadow-xl transition-shadow border dark:border-slate-700">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <div className="text-3xl font-bold text-blue-600">
+                                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                                             {internships.filter(i => i.matchScore > 70).length}
                                         </div>
-                                        <div className="text-gray-600 mt-1">High Match</div>
+                                        <div className="text-gray-600 dark:text-slate-400 mt-1">High Match</div>
                                     </div>
                                     <div className="text-4xl">🎯</div>
                                 </div>
@@ -197,6 +209,23 @@ const C_CompanyDashboard = () => {
                                             <div>
                                                 <div className="font-semibold text-indigo-600">Post New Internship</div>
                                                 <div className="text-sm text-gray-500">Create a new opportunity for students</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/payments/upload', {
+                                            state: {
+                                                companyId: localStorage.getItem('companyId'),
+                                                companyName: companyData?.companyName || localStorage.getItem('companyName') || ''
+                                            }
+                                        })}
+                                        className="w-full p-3 border-2 border-dashed border-emerald-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-colors text-left"
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <span className="text-2xl">💳</span>
+                                            <div>
+                                                <div className="font-semibold text-emerald-600">Upload Payment Slip</div>
+                                                <div className="text-sm text-gray-500">Submit payment details and proof</div>
                                             </div>
                                         </div>
                                     </button>
@@ -238,9 +267,16 @@ const C_CompanyDashboard = () => {
                 )}
 
                 {activeTab === 'post' && (
-                    <C_PostInternship onSuccess={() => {
-                        setActiveTab('internships');
+                    <C_PostInternship onSuccess={(createdInternship) => {
                         refreshInternships();
+                        navigate('/payments/upload', {
+                            state: {
+                                companyId: localStorage.getItem('companyId'),
+                                companyName: companyData?.companyName || localStorage.getItem('companyName') || '',
+                                internshipId: createdInternship?._id || '',
+                                internshipTitle: createdInternship?.title || ''
+                            }
+                        });
                     }} />
                 )}
 

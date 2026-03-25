@@ -55,22 +55,22 @@ const C_MatchSummary = ({ student, internshipId, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 max-w-3xl w-full mx-4 my-8 max-h-screen overflow-y-auto">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-3xl w-full mx-4 my-8 max-h-screen overflow-y-auto border dark:border-slate-700 dark:shadow-2xl">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">Match Analysis</h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Match Analysis</h2>
+                    <button onClick={onClose} className="text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 text-2xl">&times;</button>
                 </div>
                 
                 {/* Student Info */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 mb-6">
+                <div className="bg-gradient-to-r from-indigo-50 dark:from-slate-700 to-purple-50 dark:to-slate-700 rounded-lg p-4 mb-6 border dark:border-slate-600">
                     <div className="flex items-center space-x-4">
                         <div className="w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
                             {student.name.charAt(0)}
                         </div>
                         <div>
-                            <h3 className="text-xl font-semibold">{student.name}</h3>
-                            <p className="text-gray-600">{student.course} - {student.university}</p>
-                            <p className="text-sm text-gray-500">Year {student.year}</p>
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{student.name}</h3>
+                            <p className="text-gray-600 dark:text-slate-400">{student.course} - {student.university}</p>
+                            <p className="text-sm text-gray-500 dark:text-slate-500">Year {student.year}</p>
                         </div>
                     </div>
                 </div>
@@ -78,12 +78,12 @@ const C_MatchSummary = ({ student, internshipId, onClose }) => {
                 {/* Match Score */}
                 <div className="mb-8">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-semibold">Overall Match Score</span>
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">Overall Match Score</span>
                         <span className={`text-3xl font-bold ${getScoreColor(summary.matchScore)}`}>
                             {Math.round(summary.matchScore)}%
                         </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3">
                         <div
                             className="bg-gradient-to-r from-indigo-600 to-purple-600 h-3 rounded-full transition-all duration-500"
                             style={{ width: `${summary.matchScore}%` }}
@@ -93,23 +93,23 @@ const C_MatchSummary = ({ student, internshipId, onClose }) => {
                 
                 {/* Skills Match */}
                 <div className="mb-6">
-                    <h4 className="text-lg font-semibold mb-3">Skills Analysis</h4>
+                    <h4 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Skills Analysis</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-green-50 rounded-lg p-4">
-                            <p className="font-semibold text-green-700 mb-2">Matched Skills ({summary.skillMatch.matchedSkills.length})</p>
+                        <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 border dark:border-green-800">
+                            <p className="font-semibold text-green-700 dark:text-green-300 mb-2">Matched Skills ({summary.skillMatch.matchedSkills.length})</p>
                             <div className="flex flex-wrap gap-2">
                                 {summary.skillMatch.matchedSkills.map((skill, idx) => (
-                                    <span key={idx} className="px-2 py-1 bg-green-200 text-green-700 rounded-full text-sm">
+                                    <span key={idx} className="px-2 py-1 bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-200 rounded-full text-sm">
                                         ✓ {skill}
                                     </span>
                                 ))}
                             </div>
                         </div>
-                        <div className="bg-red-50 rounded-lg p-4">
-                            <p className="font-semibold text-red-700 mb-2">Missing Skills ({summary.skillMatch.missingSkills.length})</p>
+                        <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 border dark:border-red-800">
+                            <p className="font-semibold text-red-700 dark:text-red-300 mb-2">Missing Skills ({summary.skillMatch.missingSkills.length})</p>
                             <div className="flex flex-wrap gap-2">
                                 {summary.skillMatch.missingSkills.map((skill, idx) => (
-                                    <span key={idx} className="px-2 py-1 bg-red-200 text-red-700 rounded-full text-sm">
+                                    <span key={idx} className="px-2 py-1 bg-red-200 dark:bg-red-800 text-red-700 dark:text-red-200 rounded-full text-sm">
                                         ✗ {skill}
                                     </span>
                                 ))}
