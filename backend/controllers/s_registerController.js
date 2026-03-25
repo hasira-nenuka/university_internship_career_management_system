@@ -68,7 +68,11 @@ exports.loginStudent = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
     // Create JWT token
-    const token = jwt.sign({ id: student._id }, "secretKey", { expiresIn: "1d" });
+    const token = jwt.sign(
+      { id: student._id },
+      process.env.JWT_SECRET || "secretKey",
+      { expiresIn: "1d" }
+    );
 
     res.json({ token, student });
 
