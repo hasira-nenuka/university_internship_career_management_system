@@ -1,5 +1,5 @@
-const Internship = require('../models/C_internshipModel');
-const Company = require('../models/C_companyModel');
+const Internship = require('../models/c_internshipModel');
+const Company = require('../models/c_companyModel');
 
 // @desc    Create new internship
 // @route   POST /api/internships

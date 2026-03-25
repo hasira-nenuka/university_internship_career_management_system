@@ -1,5 +1,5 @@
 const Application = require('../models/C_applicationModel');
-const Internship = require('../models/C_internshipModel');
+const Internship = require('../models/c_internshipModel');
 const Student = require('../models/C_studentModel');
 const { calculateMatchScore } = require('./C_matchingController');
 

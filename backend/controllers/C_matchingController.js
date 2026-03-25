@@ -1,5 +1,5 @@
 const Student = require('../models/C_studentModel');
-const Internship = require('../models/C_internshipModel');
+const Internship = require('../models/c_internshipModel');
 const Application = require('../models/C_applicationModel');
 
 // Calculate match score between student and internship

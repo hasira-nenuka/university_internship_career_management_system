@@ -1,8 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Company = require('../models/C_companyModel');
-const Student = require('../models/C_studentModel');
-
-const getJwtSecret = () => process.env.JWT_SECRET || 'secretKey';
+const Company = require('../models/c_companyModel');
 
 // Protect Company
 const protectCompany = async (req, res, next) => {

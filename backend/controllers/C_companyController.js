@@ -1,4 +1,4 @@
-const Company = require('../models/C_companyModel');
+const Company = require('../models/c_companyModel');
 const { generateToken } = require('../middleware/C_authMiddleware');
 
 // @desc    Register a new company

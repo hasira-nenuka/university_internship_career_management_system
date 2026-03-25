@@ -4,60 +4,52 @@ const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
 
+// Load env vars
 dotenv.config();
 
 const app = express();
 
-const allowedOrigins = new Set([
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3001'
-]);
-
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.has(origin)) {
-            return callback(null, true);
-        }
-
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    credentials: true
-}));
+// Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Enable CORS
+app.use(cors({
+    origin: ['http://localhost:3000'],
+    credentials: true
+}));
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Routes
 app.use('/api/tasks', require('./routes/taskRoutes'));
-app.use('/api/students', require('./routes/s_registerRoutes'));
-app.use('/api/company', require('./routes/c_companyRoutes'));
-app.use('/api/internships', require('./routes/c_internshipRoutes'));
-app.use('/api/upload', require('./routes/c_uploadRoutes'));
-app.use('/api/payments', require('./routes/p_paymentRoutes'));
-app.use('/api/pro-accounts', require('./routes/p_proAccountRoutes'));
-app.use('/api/applications', require('./routes/C_applicationRoutes'));
-app.use('/api/matching', require('./routes/C_matchingRoutes'));
-app.use('/api/company-tasks', require('./routes/C_taskRoutes'));
-app.use('/api/admins', require('./routes/adminRoutes'));
-app.use('/api/admin-resources', require('./routes/adminResourceRoutes'));
+app.use("/api/students", require('./routes/s_registerRoutes'));
+app.use("/api/company", require("./routes/c_companyRoutes"));
+app.use("/api/internships", require("./routes/c_internshipRoutes"));
+app.use("/api/upload", require("./routes/c_uploadRoutes"));
+app.use("/api/payments", require("./routes/p_paymentRoutes"));
+app.use("/api/pro-accounts", require("./routes/p_proAccountRoutes"));
 
+// Basic route
 app.get('/', (req, res) => {
-    res.json({
+    res.json({ 
         message: 'StepIn Internship Management API',
         status: 'running'
     });
 });
 
+// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'OK' });
 });
 
+// Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: err.message });
 });
 
+// 404
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
@@ -65,10 +57,14 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-    await connectDB();
+    const isDatabaseConnected = await connectDB();
+
+    if (!isDatabaseConnected) {
+        console.warn('Starting server without MongoDB. Task data will be stored in memory until the process restarts.');
+    }
 
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        console.log(`🚀 Server running on port ${PORT}`);
     });
 };
 

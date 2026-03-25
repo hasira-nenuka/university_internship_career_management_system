@@ -7,7 +7,7 @@ const {
     getInternshipsByCompany,
     updateInternship,
     deleteInternship
-} = require('../controllers/C_internshipController');
+} = require('../controllers/c_internshipController');
 const { protectCompany } = require('../middleware/C_authMiddleware');
 
 router.get('/', getAllInternships);
