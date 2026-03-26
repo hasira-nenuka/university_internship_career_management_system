@@ -21,6 +21,14 @@ const adminSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
+      enum: [
+        'Super Admin',
+        'Admin Manager',
+        'Company Manager',
+        'Internship Manager',
+        'Payment Manager',
+        'Review Admin',
+      ],
       default: 'Admin Manager',
     },
     department: {

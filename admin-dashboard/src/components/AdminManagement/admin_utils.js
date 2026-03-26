@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const ADMIN_API_URL = 'http://localhost:5000/api/admins';
 const ADMIN_RESOURCES_URL = 'http://localhost:5000/api/admin-resources';
+const ADMIN_REVIEWS_URL = 'http://localhost:5000/api/reviews';
 const ADMIN_SESSION_KEY = 'stepin_admin_session';
 
 const api = axios.create();
@@ -32,6 +33,7 @@ export const ADMIN_ROLES = [
   'Company Manager',
   'Internship Manager',
   'Payment Manager',
+  'Review Admin',
 ];
 
 export const PAGE_ACCESS = {
@@ -41,6 +43,7 @@ export const PAGE_ACCESS = {
   companies: ['Super Admin', 'Company Manager'],
   internships: ['Super Admin', 'Internship Manager'],
   payments: ['Super Admin', 'Payment Manager'],
+  reviews: ['Super Admin', 'Review Admin'],
 };
 
 export const isRoleAllowed = (role, allowedRoles = []) => allowedRoles.includes(role);
@@ -53,6 +56,7 @@ export const getAdminNavigation = (role) => {
     { label: 'Company Data', path: '/companies', accessKey: 'companies' },
     { label: 'Internship Data', path: '/internships', accessKey: 'internships' },
     { label: 'Payment Data', path: '/payments', accessKey: 'payments' },
+    { label: 'Review Data', path: '/reviews', accessKey: 'reviews' },
   ];
 
   return items.filter((item) => isRoleAllowed(role, PAGE_ACCESS[item.accessKey]));
@@ -245,4 +249,23 @@ export const updateResourceRecord = async (resourceKey, id, payload) => {
 
 export const deleteResourceRecord = async (resourceKey, id) => {
   await api.delete(`${ADMIN_RESOURCES_URL}/${RESOURCE_CONFIGS[resourceKey].endpoint}/${id}`, getAuthConfig());
+};
+
+export const fetchReviewRecords = async () => {
+  const response = await api.get(ADMIN_REVIEWS_URL, getAuthConfig());
+  return response.data?.data || [];
+};
+
+export const replyToReviewRecord = async (reviewId, payload) => {
+  const response = await api.patch(`${ADMIN_REVIEWS_URL}/${reviewId}/reply`, payload, getAuthConfig());
+  return response.data?.data;
+};
+
+export const updateReviewRecordStatus = async (reviewId, status) => {
+  const response = await api.patch(`${ADMIN_REVIEWS_URL}/${reviewId}/status`, { status }, getAuthConfig());
+  return response.data?.data;
+};
+
+export const deleteReviewRecord = async (reviewId) => {
+  await api.delete(`${ADMIN_REVIEWS_URL}/${reviewId}`, getAuthConfig());
 };

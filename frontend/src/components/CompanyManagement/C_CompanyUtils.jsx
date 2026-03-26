@@ -201,3 +201,21 @@ export const searchStudentsDirectly = async (category, district) => {
         throw error.response?.data || { message: 'Failed to search students' };
     }
 };
+
+export const submitCompanyReview = async (reviewData) => {
+    try {
+        const response = await axios.post(`${API_URL}/reviews/company`, reviewData, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to submit review' };
+    }
+};
+
+export const getCompanyReviews = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/reviews/company`, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to fetch reviews' };
+    }
+};
