@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import AdminLayout from "./admin_layout";
+import { PAGE_ACCESS } from "./admin_utils";
 
 const API_URL = "http://localhost:5000/api";
 const EMPTY_FORM = {
@@ -214,17 +216,25 @@ const A_PaymentManagement = () => {
 
   if (!adminSession?.token) {
     return (
-      <div className="min-h-screen bg-slate-100 px-4 py-10">
+      <AdminLayout
+        title="Payment Data"
+        description="Manage company and student payment records."
+        allowedRoles={PAGE_ACCESS.payments}
+      >
         <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
           Admin login is required to manage payment records.
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-100 py-10 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminLayout
+      title="Payment Data"
+      description="Record, review, and update all company and student payments from one admin workspace."
+      allowedRoles={PAGE_ACCESS.payments}
+    >
+      <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
           <div className="grid gap-4 md:grid-cols-4">
             <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
@@ -528,7 +538,7 @@ const A_PaymentManagement = () => {
           )}
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
