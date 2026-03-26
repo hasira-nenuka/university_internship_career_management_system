@@ -13,11 +13,21 @@ const sanitizeAdmin = (adminDoc) => ({
   updatedAt: adminDoc.updatedAt,
 });
 
+const ALLOWED_ADMIN_ROLES = [
+  'Super Admin',
+  'Admin Manager',
+  'Company Manager',
+  'Internship Manager',
+  'Payment Manager',
+  'Review Admin',
+];
+
 const validateAdminPayload = ({ fullName, email, password, role }) => {
   if (!fullName || !fullName.trim()) return 'Full name is required';
   if (!email || !email.trim()) return 'Email is required';
   if (!password || !password.trim()) return 'Password is required';
   if (!role || !role.trim()) return 'Role is required';
+  if (!ALLOWED_ADMIN_ROLES.includes(role.trim())) return 'Invalid admin role';
   return null;
 };
 
@@ -38,6 +48,10 @@ exports.createAdmin = async (req, res) => {
     const existingAdmin = await Admin.findOne({ email: normalizedEmail });
     if (existingAdmin) {
       return res.status(400).json({ success: false, message: 'Admin email already exists' });
+    }
+
+    if (adminCount > 0 && req.body.role.trim() === 'Review Admin' && req.admin?.role !== 'Super Admin') {
+      return res.status(403).json({ success: false, message: 'Only Super Admin can create a Review Admin' });
     }
 
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
@@ -124,6 +138,14 @@ exports.getAdmin = async (req, res) => {
 
 exports.updateAdmin = async (req, res) => {
   try {
+    if (req.body.role && !ALLOWED_ADMIN_ROLES.includes(req.body.role.trim())) {
+      return res.status(400).json({ success: false, message: 'Invalid admin role' });
+    }
+
+    if (req.body.role?.trim() === 'Review Admin' && req.admin?.role !== 'Super Admin') {
+      return res.status(403).json({ success: false, message: 'Only Super Admin can assign the Review Admin role' });
+    }
+
     const updates = {
       ...(req.body.fullName ? { fullName: req.body.fullName.trim() } : {}),
       ...(req.body.email ? { email: req.body.email.trim().toLowerCase() } : {}),
@@ -156,6 +178,14 @@ exports.updateAdminRole = async (req, res) => {
     const { role } = req.body;
     if (!role || !role.trim()) {
       return res.status(400).json({ success: false, message: 'Role is required' });
+    }
+
+    if (!ALLOWED_ADMIN_ROLES.includes(role.trim())) {
+      return res.status(400).json({ success: false, message: 'Invalid admin role' });
+    }
+
+    if (role.trim() === 'Review Admin' && req.admin?.role !== 'Super Admin') {
+      return res.status(403).json({ success: false, message: 'Only Super Admin can assign the Review Admin role' });
     }
 
     const admin = await Admin.findByIdAndUpdate(

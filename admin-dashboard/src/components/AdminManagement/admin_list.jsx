@@ -7,6 +7,7 @@ const roleColors = {
   'Payment Manager': 'bg-amber-100 text-amber-700',
   'Company Manager': 'bg-sky-100 text-sky-700',
   'Internship Manager': 'bg-emerald-100 text-emerald-700',
+  'Review Admin': 'bg-fuchsia-100 text-fuchsia-700',
 };
 
 const AdminList = ({ admins, onRoleChange, onEdit, onDelete }) => {

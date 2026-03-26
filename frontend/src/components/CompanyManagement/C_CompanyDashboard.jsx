@@ -6,6 +6,7 @@ import InternshipList from './C_InternshipList';
 import StudentRecommendations from './C_StudentRecommendations';
 import CompanyProfile from './C_CompanyProfile';
 import ApplicationManagement from './C_ApplicationManagement';
+import CompanyReviews from './C_CompanyReviews';
 
 const C_CompanyDashboard = () => {
     const navigate = useNavigate();
@@ -119,6 +120,7 @@ const C_CompanyDashboard = () => {
                             { id: 'internships', name: 'My Internships', icon: '💼' },
                             { id: 'applications', name: 'Applications', icon: '📋' },
                             { id: 'recommendations', name: 'Find Students', icon: '🎯' },
+                            { id: 'reviews', name: 'Reviews', icon: '⭐' },
                             { id: 'profile', name: 'Company Profile', icon: '🏢' }
                         ].map((tab) => (
                             <button
@@ -241,6 +243,18 @@ const C_CompanyDashboard = () => {
                                             </div>
                                         </div>
                                     </button>
+                                    <button
+                                        onClick={() => setActiveTab('reviews')}
+                                        className="w-full p-3 border-2 border-dashed border-amber-300 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-colors text-left"
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <span className="text-2xl">⭐</span>
+                                            <div>
+                                                <div className="font-semibold text-amber-600">Leave Platform Review</div>
+                                                <div className="text-sm text-gray-500">Send feedback to the review management team</div>
+                                            </div>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
                             
@@ -290,6 +304,10 @@ const C_CompanyDashboard = () => {
 
                 {activeTab === 'recommendations' && (
                     <StudentRecommendations internships={internships} />
+                )}
+
+                {activeTab === 'reviews' && (
+                    <CompanyReviews />
                 )}
 
                 {activeTab === 'profile' && (

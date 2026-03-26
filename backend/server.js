@@ -45,6 +45,7 @@ app.use('/api/matching', require('./routes/C_matchingRoutes'));
 app.use('/api/company-tasks', require('./routes/C_taskRoutes'));
 app.use('/api/admins', require('./routes/adminRoutes'));
 app.use('/api/admin-resources', require('./routes/adminResourceRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 app.get('/', (req, res) => {
     res.json({

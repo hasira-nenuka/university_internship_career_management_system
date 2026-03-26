@@ -24,7 +24,7 @@ const AdminLayout = ({ title, description, children, allowedRoles }) => {
     if (allowedRoles && session?.admin?.role && !isRoleAllowed(session.admin.role, allowedRoles)) {
       navigate('/dashboard');
     }
-  }, [navigate]);
+  }, [allowedRoles, navigate]);
 
   const handleLogout = () => {
     logoutAdmin();

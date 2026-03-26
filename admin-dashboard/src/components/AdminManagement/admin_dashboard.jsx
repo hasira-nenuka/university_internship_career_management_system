@@ -149,6 +149,7 @@ const AdminDashboard = () => {
                   {item.label === 'Company Data' && '▣'}
                   {item.label === 'Internship Data' && '◆'}
                   {item.label === 'Payment Data' && '¤'}
+                  {item.label === 'Review Data' && '✦'}
                 </div>
 
                 <h3 className="mt-6 text-3xl font-black leading-tight text-[#16213b]">
