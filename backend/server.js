@@ -32,9 +32,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/upload', express.static(path.join(__dirname, 'upload')));
 
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/students', require('./routes/s_registerRoutes'));
+app.use('/api/profiles', require('./routes/s_ProfileRoutes'));
 app.use('/api/company', require('./routes/c_companyRoutes'));
 app.use('/api/internships', require('./routes/c_internshipRoutes'));
 app.use('/api/upload', require('./routes/c_uploadRoutes'));

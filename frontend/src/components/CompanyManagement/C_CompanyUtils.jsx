@@ -3,6 +3,22 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 
+const normalizeCompanyApiError = (error, fallbackMessage) => {
+    const message = error.response?.data?.message || error.message || fallbackMessage;
+
+    if (
+        message.includes('buffering timed out') ||
+        message.includes('Database is currently unavailable') ||
+        message.includes('ECONNREFUSED')
+    ) {
+        return {
+            message: 'Company login is unavailable because the backend database is not running. Start MongoDB and restart the backend, then try again.'
+        };
+    }
+
+    return error.response?.data || { message: fallbackMessage };
+};
+
 // Set up axios instance with token
 const getAuthHeader = () => {
     const token = localStorage.getItem('companyToken');
@@ -23,7 +39,7 @@ export const registerCompany = async (companyData) => {
         }
         return response.data;
     } catch (error) {
-        throw error.response?.data || { message: 'Registration failed' };
+        throw normalizeCompanyApiError(error, 'Registration failed');
     }
 };
 
@@ -39,7 +55,7 @@ export const loginCompany = async (email, password) => {
         }
         return response.data;
     } catch (error) {
-        throw error.response?.data || { message: 'Login failed' };
+        throw normalizeCompanyApiError(error, 'Login failed');
     }
 };
 

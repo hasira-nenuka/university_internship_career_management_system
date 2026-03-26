@@ -9,6 +9,12 @@ import PaymentSummary from './components/PaymentManagement/p_PaymentSummary';
 import PaymentSuccess from './components/PaymentManagement/p_PaymentSuccess';
 import ProAccountUpgrade from './components/PaymentManagement/p_ProAccountUpgrade';
 import AdminPaymentManagement from './components/AdminManagement/A_PaymentManagement';
+import StudentLogin from './components/StudentManagement/student_login';
+import StudentRegister from './components/StudentManagement/student_register';
+import StudentDashboard from './components/StudentManagement/student_dashboard';
+import StudentProfile from './components/StudentManagement/S_Profile';
+import StudentProfileView from './components/StudentManagement/S_ProfileView';
+import StudentProfileViewCompany from './components/StudentManagement/S_PviewCompany';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 import AboutUs from './pages/AboutUs';
@@ -42,24 +48,13 @@ function App() {
           <Route path="/payments/pro-upgrade" element={<ProAccountUpgrade />} />
           <Route path="/admin/payments" element={<AdminPaymentManagement />} />
           
-          {/* Student Routes - Placeholder */}
-          <Route path="/login/student" element={
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Student Login</h1>
-                <p className="text-gray-600 dark:text-slate-300">Student login page coming soon...</p>
-              </div>
-            </div>
-          } />
-          
-          <Route path="/register/student" element={
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Student Registration</h1>
-                <p className="text-gray-600 dark:text-slate-300">Student registration page coming soon...</p>
-              </div>
-            </div>
-          } />
+          {/* Student Routes */}
+          <Route path="/login/student" element={<StudentLogin />} />
+          <Route path="/register/student" element={<StudentRegister />} />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/profile" element={<StudentProfile />} />
+          <Route path="/student/profile/view/:id" element={<StudentProfileView />} />
+          <Route path="/student/profile/company-view" element={<StudentProfileViewCompany />} />
 
           <Route path="*" element={
             <div className="min-h-[60vh] flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
