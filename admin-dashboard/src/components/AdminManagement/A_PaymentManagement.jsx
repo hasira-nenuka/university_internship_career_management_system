@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import AdminLayout from "./admin_layout";
+import { PAGE_ACCESS } from "./admin_utils";
 
 const API_URL = "http://localhost:5000/api";
 const EMPTY_FORM = {
@@ -53,25 +55,16 @@ const PAYMENT_LABELS = {
 };
 
 const getStoredAdminSession = () => {
-  const modernSession = localStorage.getItem("stepin_admin_session");
-  if (modernSession) {
-    try {
-      return JSON.parse(modernSession);
-    } catch (err) {
-      return null;
-    }
+  const saved = localStorage.getItem("stepin_admin_session");
+  if (!saved) {
+    return null;
   }
 
-  const legacySession = localStorage.getItem("adminSession");
-  if (legacySession) {
-    try {
-      return JSON.parse(legacySession);
-    } catch (err) {
-      return null;
-    }
+  try {
+    return JSON.parse(saved);
+  } catch (err) {
+    return null;
   }
-
-  return null;
 };
 
 const A_PaymentManagement = () => {
@@ -84,6 +77,17 @@ const A_PaymentManagement = () => {
   const [adminSession, setAdminSession] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
+
+  const authConfig = useMemo(() => {
+    const token = adminSession?.token;
+    return token
+      ? {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      : {};
+  }, [adminSession]);
 
   const filteredPayments = useMemo(() => {
     return payments.filter((item) => {
@@ -99,40 +103,21 @@ const A_PaymentManagement = () => {
     });
   }, [filters, payments]);
 
-  const authConfig = useMemo(() => {
-    const token = adminSession?.token;
-    return token
-      ? {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+  const paymentSummary = useMemo(() => {
+    return payments.reduce(
+      (summary, item) => {
+        summary.total += 1;
+        summary.amount += Number(item.amount || 0);
+        if (item.payerType === "student") {
+          summary.students += 1;
+        } else {
+          summary.companies += 1;
         }
-      : {};
-  }, [adminSession]);
-
-  const formatDate = (value) => {
-    if (!value) return "-";
-    return new Date(value).toLocaleString();
-  };
-
-  const displayPartyName = (payment) => (
-    payment.payerType === "student" ? payment.studentName || "-" : payment.companyName || "-"
-  );
-
-  const fetchPayments = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await axios.get(`${API_URL}/payments/admin`, authConfig);
-      const payload = response.data;
-      const normalized = Array.isArray(payload?.data) ? payload.data : [];
-      setPayments(normalized);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to load payments");
-    } finally {
-      setLoading(false);
-    }
-  };
+        return summary;
+      },
+      { total: 0, amount: 0, companies: 0, students: 0 }
+    );
+  }, [payments]);
 
   useEffect(() => {
     setAdminSession(getStoredAdminSession());
@@ -143,6 +128,19 @@ const A_PaymentManagement = () => {
       fetchPayments();
     }
   }, [adminSession]);
+
+  const fetchPayments = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get(`${API_URL}/payments/admin`, authConfig);
+      setPayments(Array.isArray(response.data?.data) ? response.data.data : []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load payments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleStatusChange = async (paymentId, status) => {
     setActionLoadingId(paymentId);
@@ -158,17 +156,6 @@ const A_PaymentManagement = () => {
     } finally {
       setActionLoadingId("");
     }
-  };
-
-  const filterButtonClass = (group, value) =>
-    `px-4 py-2 rounded-lg text-sm font-semibold transition ${
-      filters[group] === value
-        ? "bg-indigo-600 text-white"
-        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-    }`;
-
-  const handleFilterChange = (group, value) => {
-    setFilters((current) => ({ ...current, [group]: value }));
   };
 
   const handleFormChange = (event) => {
@@ -212,35 +199,42 @@ const A_PaymentManagement = () => {
     }
   };
 
-  const paymentSummary = useMemo(() => {
-    return payments.reduce(
-      (summary, item) => {
-        summary.total += 1;
-        summary.amount += Number(item.amount || 0);
-        if (item.payerType === "student") {
-          summary.students += 1;
-        } else {
-          summary.companies += 1;
-        }
-        return summary;
-      },
-      { total: 0, amount: 0, companies: 0, students: 0 }
-    );
-  }, [payments]);
+  const formatDate = (value) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleString();
+  };
+
+  const displayPartyName = (payment) =>
+    payment.payerType === "student" ? payment.studentName || "-" : payment.companyName || "-";
+
+  const filterButtonClass = (group, value) =>
+    `px-4 py-2 rounded-lg text-sm font-semibold transition ${
+      filters[group] === value
+        ? "bg-indigo-600 text-white"
+        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+    }`;
 
   if (!adminSession?.token) {
     return (
-      <div className="min-h-screen bg-slate-100 px-4 py-10">
+      <AdminLayout
+        title="Payment Data"
+        description="Manage company and student payment records."
+        allowedRoles={PAGE_ACCESS.payments}
+      >
         <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
           Admin login is required to manage payment records.
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-100 py-10 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminLayout
+      title="Payment Data"
+      description="Record, review, and update all company and student payments from one admin workspace."
+      allowedRoles={PAGE_ACCESS.payments}
+    >
+      <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
           <div className="grid gap-4 md:grid-cols-4">
             <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
@@ -268,12 +262,23 @@ const A_PaymentManagement = () => {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Add Payment Record</h2>
-              <p className="text-slate-600 mt-1">Payment Admin can record complete company and student payment details.</p>
+              <p className="text-slate-600 mt-1">Enter the full payment details required by the backend.</p>
             </div>
             <div className="text-sm text-slate-600 bg-slate-100 px-4 py-2 rounded-lg">
-              Admin: {adminSession?.admin?.fullName || adminSession?.name || "System Admin"}
+              Admin: {adminSession?.admin?.fullName || "System Admin"}
             </div>
           </div>
+
+          {error ? (
+            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
+              {error}
+            </div>
+          ) : null}
+          {success ? (
+            <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+              {success}
+            </div>
+          ) : null}
 
           <form onSubmit={handleCreatePayment} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <label className="text-sm text-slate-700">
@@ -376,7 +381,7 @@ const A_PaymentManagement = () => {
               <input required name="referenceNo" value={formData.referenceNo} onChange={handleFormChange} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
             </label>
 
-            {formData.payerType === "company" && (
+            {formData.payerType === "company" ? (
               <>
                 <label className="text-sm text-slate-700">
                   <span className="mb-1 block font-medium">Internship ID</span>
@@ -387,7 +392,7 @@ const A_PaymentManagement = () => {
                   <input name="internshipTitle" value={formData.internshipTitle} onChange={handleFormChange} className="w-full rounded-lg border border-slate-300 px-3 py-2" />
                 </label>
               </>
-            )}
+            ) : null}
 
             <label className="text-sm text-slate-700">
               <span className="mb-1 block font-medium">Slip URL</span>
@@ -417,159 +422,123 @@ const A_PaymentManagement = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Admin Payment Management</h1>
-            <p className="text-slate-600 mt-1">View every payment detail for companies and students, then update payment status.</p>
-          </div>
-        </div>
+          <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Payment Records</h1>
+              <p className="text-slate-600 mt-1">All company and student payments in one table.</p>
+            </div>
 
-        <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={() => handleFilterChange("payerType", "all")} className={filterButtonClass("payerType", "all")}>
-              All Payers
-            </button>
-            <button type="button" onClick={() => handleFilterChange("payerType", "company")} className={filterButtonClass("payerType", "company")}>
-              Companies
-            </button>
-            <button type="button" onClick={() => handleFilterChange("payerType", "student")} className={filterButtonClass("payerType", "student")}>
-              Students
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, payerType: "all" }))} className={filterButtonClass("payerType", "all")}>All Payers</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, payerType: "company" }))} className={filterButtonClass("payerType", "company")}>Companies</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, payerType: "student" }))} className={filterButtonClass("payerType", "student")}>Students</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "all" }))} className={filterButtonClass("status", "all")}>All Statuses</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "pending" }))} className={filterButtonClass("status", "pending")}>Pending</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "verified" }))} className={filterButtonClass("status", "verified")}>Verified</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "rejected" }))} className={filterButtonClass("status", "rejected")}>Rejected</button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button type="button" onClick={() => handleFilterChange("status", "all")} className={filterButtonClass("status", "all")}>
-              All Statuses
-            </button>
-            <button type="button" onClick={() => handleFilterChange("status", "pending")} className={filterButtonClass("status", "pending")}>
-              Pending
-            </button>
-            <button type="button" onClick={() => handleFilterChange("status", "verified")} className={filterButtonClass("status", "verified")}>
-              Verified
-            </button>
-            <button type="button" onClick={() => handleFilterChange("status", "rejected")} className={filterButtonClass("status", "rejected")}>
-              Rejected
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-700">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
-            {success}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="py-12 text-center text-slate-600">Loading payments...</div>
-        ) : filteredPayments.length === 0 ? (
-          <div className="py-12 text-center text-slate-600">No payments found for the selected filters.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-2 text-sm text-slate-700">
-              <thead>
-                <tr className="text-left text-slate-500">
-                  <th className="px-3 py-2">Payer</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Party Details</th>
-                  <th className="px-3 py-2">Bank Details</th>
-                  <th className="px-3 py-2">Amount</th>
-                  <th className="px-3 py-2">Dates</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPayments.map((payment) => (
-                  <tr key={payment._id} className="align-top rounded-xl bg-slate-50 shadow-sm">
-                    <td className="px-3 py-4">
-                      <div className="font-semibold text-slate-900">{displayPartyName(payment)}</div>
-                      <div className="text-xs uppercase tracking-wide text-slate-500">{payment.payerType}</div>
-                      <div className="mt-1 text-xs text-slate-500">{payment._id}</div>
-                    </td>
-                    <td className="px-3 py-4">
-                      <div className="font-medium">{PAYMENT_LABELS[payment.paymentType] || payment.paymentType}</div>
-                      {payment.internshipTitle ? <div className="text-xs text-slate-500">{payment.internshipTitle}</div> : null}
-                    </td>
-                    <td className="px-3 py-4">
-                      <div>Account Name: {payment.name || "-"}</div>
-                      <div>NIC: {payment.nic || "-"}</div>
-                      <div>Phone: {payment.phoneNumber || "-"}</div>
-                      <div>Email: {payment.payerEmail || "-"}</div>
-                      <div>{payment.payerType === "student" ? "Student ID" : "Company ID"}: {payment.studentId || payment.companyId || "-"}</div>
-                      {payment.notes ? <div className="mt-1 text-xs text-slate-500">Notes: {payment.notes}</div> : null}
-                    </td>
-                    <td className="px-3 py-4">
-                      <div>Bank: {payment.bankName || "-"}</div>
-                      <div>Branch: {payment.branchName || "-"}</div>
-                      <div>Account No: {payment.accountNumber || "-"}</div>
-                      <div>Reference: {payment.referenceNo || "-"}</div>
-                      <div>
-                        Slip:{" "}
-                        {payment.slipUrl ? (
-                          <a href={payment.slipUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
-                            View
-                          </a>
-                        ) : (
-                          "-"
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-4 font-semibold text-slate-900">
-                      Rs {Number(payment.amount || 0).toFixed(2)}
-                    </td>
-                    <td className="px-3 py-4">
-                      <div>Payment: {formatDate(payment.paymentDate)}</div>
-                      <div>Time: {payment.paymentTime || "-"}</div>
-                      <div>Created: {formatDate(payment.createdAt)}</div>
-                      <div>Recorded By: {payment.recordedByAdminName || "-"}</div>
-                    </td>
-                    <td className="px-3 py-4">
-                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_STYLES[payment.status] || STATUS_STYLES.pending}`}>
-                        {payment.status}
-                      </span>
-                    </td>
-                    <td className="px-3 py-4">
-                      <div className="flex min-w-[180px] flex-col gap-2">
-                        <button
-                          type="button"
-                          disabled={actionLoadingId === payment._id || payment.status === "verified"}
-                          onClick={() => handleStatusChange(payment._id, "verified")}
-                          className="rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                        >
-                          {actionLoadingId === payment._id && payment.status !== "verified" ? "Updating..." : "Verify"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={actionLoadingId === payment._id || payment.status === "pending"}
-                          onClick={() => handleStatusChange(payment._id, "pending")}
-                          className="rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
-                        >
-                          Set Pending
-                        </button>
-                        <button
-                          type="button"
-                          disabled={actionLoadingId === payment._id || payment.status === "rejected"}
-                          onClick={() => handleStatusChange(payment._id, "rejected")}
-                          className="rounded-lg bg-rose-600 px-3 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="py-12 text-center text-slate-600">Loading payments...</div>
+          ) : filteredPayments.length === 0 ? (
+            <div className="py-12 text-center text-slate-600">No payments found for the selected filters.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-separate border-spacing-y-2 text-sm text-slate-700">
+                <thead>
+                  <tr className="text-left text-slate-500">
+                    <th className="px-3 py-2">Payer</th>
+                    <th className="px-3 py-2">Type</th>
+                    <th className="px-3 py-2">Party Details</th>
+                    <th className="px-3 py-2">Bank Details</th>
+                    <th className="px-3 py-2">Amount</th>
+                    <th className="px-3 py-2">Dates</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {filteredPayments.map((payment) => (
+                    <tr key={payment._id} className="align-top rounded-xl bg-slate-50 shadow-sm">
+                      <td className="px-3 py-4">
+                        <div className="font-semibold text-slate-900">{displayPartyName(payment)}</div>
+                        <div className="text-xs uppercase tracking-wide text-slate-500">{payment.payerType}</div>
+                        <div className="mt-1 text-xs text-slate-500">{payment._id}</div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="font-medium">{PAYMENT_LABELS[payment.paymentType] || payment.paymentType}</div>
+                        {payment.internshipTitle ? <div className="text-xs text-slate-500">{payment.internshipTitle}</div> : null}
+                      </td>
+                      <td className="px-3 py-4">
+                        <div>Account Name: {payment.name || "-"}</div>
+                        <div>NIC: {payment.nic || "-"}</div>
+                        <div>Phone: {payment.phoneNumber || "-"}</div>
+                        <div>Email: {payment.payerEmail || "-"}</div>
+                        <div>{payment.payerType === "student" ? "Student ID" : "Company ID"}: {payment.studentId || payment.companyId || "-"}</div>
+                        {payment.notes ? <div className="mt-1 text-xs text-slate-500">Notes: {payment.notes}</div> : null}
+                      </td>
+                      <td className="px-3 py-4">
+                        <div>Bank: {payment.bankName || "-"}</div>
+                        <div>Branch: {payment.branchName || "-"}</div>
+                        <div>Account No: {payment.accountNumber || "-"}</div>
+                        <div>Reference: {payment.referenceNo || "-"}</div>
+                        <div>
+                          Slip:{" "}
+                          {payment.slipUrl ? (
+                            <a href={payment.slipUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">View</a>
+                          ) : "-"}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 font-semibold text-slate-900">Rs {Number(payment.amount || 0).toFixed(2)}</td>
+                      <td className="px-3 py-4">
+                        <div>Payment: {formatDate(payment.paymentDate)}</div>
+                        <div>Time: {payment.paymentTime || "-"}</div>
+                        <div>Created: {formatDate(payment.createdAt)}</div>
+                        <div>Recorded By: {payment.recordedByAdminName || "-"}</div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_STYLES[payment.status] || STATUS_STYLES.pending}`}>
+                          {payment.status}
+                        </span>
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="flex min-w-[180px] flex-col gap-2">
+                          <button
+                            type="button"
+                            disabled={actionLoadingId === payment._id || payment.status === "verified"}
+                            onClick={() => handleStatusChange(payment._id, "verified")}
+                            className="rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            {actionLoadingId === payment._id && payment.status !== "verified" ? "Updating..." : "Verify"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={actionLoadingId === payment._id || payment.status === "pending"}
+                            onClick={() => handleStatusChange(payment._id, "pending")}
+                            className="rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                          >
+                            Set Pending
+                          </button>
+                          <button
+                            type="button"
+                            disabled={actionLoadingId === payment._id || payment.status === "rejected"}
+                            onClick={() => handleStatusChange(payment._id, "rejected")}
+                            className="rounded-lg bg-rose-600 px-3 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

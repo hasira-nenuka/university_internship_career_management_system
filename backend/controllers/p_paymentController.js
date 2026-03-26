@@ -4,6 +4,8 @@ const multer = require("multer");
 const mongoose = require("mongoose");
 const Payment = require("../models/p_paymentModel");
 const Internship = require("../models/c_internshipModel");
+const Company = require("../models/c_companyModel");
+const Student = require("../models/s_registerModel");
 const {
   PRO_AMOUNT,
   markProPaymentPending,
@@ -44,111 +46,241 @@ const buildTimeString = (hours, minutes, seconds) => {
   return `${hh}:${mm}:${ss}`;
 };
 
-exports.createPayment = async (req, res) => {
-  try {
-    const {
-      companyId,
-      internshipId,
-      paymentType,
-      internshipTitle,
-      name,
-      nic,
-      companyName,
-      phoneNumber,
-      bankName,
-      branchName,
-      accountNumber,
-      amount,
-      paymentDate,
-      hours,
-      minutes,
-      seconds,
-      referenceNo
-    } = req.body;
+const normalizeText = (value) => String(value || "").trim();
 
-    if (
-      !companyId || !name || !nic || !companyName || !phoneNumber || !bankName ||
-      !branchName || !accountNumber || !amount || !paymentDate || !referenceNo
-    ) {
-      return res.status(400).json({ success: false, message: "All required fields must be provided" });
-    }
+const normalizePaymentType = (paymentType, payerType) => {
+  const normalized = normalizeText(paymentType);
 
-    if (!mongoose.Types.ObjectId.isValid(companyId)) {
-      return res.status(400).json({ success: false, message: "Invalid companyId" });
-    }
+  if (payerType === "student") {
+    return normalized === "student_payment" ? "student_payment" : "other";
+  }
 
-    if (internshipId && !mongoose.Types.ObjectId.isValid(internshipId)) {
-      return res.status(400).json({ success: false, message: "Invalid internshipId" });
-    }
+  if (normalized === "pro_account") {
+    return "pro_account";
+  }
 
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      return res.status(400).json({ success: false, message: "Mobile number must be 10 digits" });
-    }
+  if (normalized === "other") {
+    return "other";
+  }
 
-    if (bankName === "Sampath Bank" && String(referenceNo).length !== 12) {
-      return res.status(400).json({ success: false, message: "Reference No must be 12 digits for Sampath Bank" });
-    }
+  return "internship_post";
+};
 
-    if (bankName === "BOC Bank" && String(referenceNo).length !== 16) {
-      return res.status(400).json({ success: false, message: "Reference No must be 16 digits for BOC Bank" });
-    }
+const validateReferenceNumber = (bankName, referenceNo) => {
+  const normalizedBank = normalizeText(bankName);
+  const reference = normalizeText(referenceNo);
 
-    const amountNumber = Number(amount);
-    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      return res.status(400).json({ success: false, message: "Amount must be a valid number greater than 0" });
-    }
+  if (normalizedBank === "Sampath Bank" && reference.length !== 12) {
+    return "Reference No must be 12 digits for Sampath Bank";
+  }
 
-    const normalizedPaymentType = paymentType === "pro_account" ? "pro_account" : "internship_post";
+  if (normalizedBank === "BOC Bank" && reference.length !== 16) {
+    return "Reference No must be 16 digits for BOC Bank";
+  }
 
-    if (normalizedPaymentType === "pro_account" && amountNumber !== PRO_AMOUNT) {
-      return res.status(400).json({
-        success: false,
-        message: `Pro account payment must be exactly Rs ${PRO_AMOUNT.toFixed(2)}`
-      });
-    }
+  return "";
+};
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "Payment slip is required" });
-    }
+const syncPaymentRelations = async (payment, status = payment.status) => {
+  if (payment.internshipId) {
+    const internshipStatus = status === "verified"
+      ? "verified"
+      : status === "rejected"
+        ? "rejected"
+        : "pending";
 
-    const slipUrl = `${req.protocol}://${req.get("host")}/uploads/payments/${req.file.filename}`;
+    await Internship.findByIdAndUpdate(
+      payment.internshipId,
+      {
+        paymentVerificationStatus: internshipStatus,
+        paymentVerifiedAt: status === "verified" ? new Date() : null
+      },
+      { runValidators: false }
+    );
+  }
 
-    const payment = await Payment.create({
-      companyId,
-      internshipId: internshipId || null,
-      paymentType: normalizedPaymentType,
-      internshipTitle: internshipTitle || "",
-      name,
-      nic,
-      companyName,
-      phoneNumber,
-      bankName,
-      branchName,
-      accountNumber,
-      amount: amountNumber,
-      paymentDate,
-      paymentTime: buildTimeString(hours, minutes, seconds),
-      referenceNo,
-      slipUrl
-    });
-
-    if (internshipId) {
-      await Internship.findByIdAndUpdate(
-        internshipId,
-        {
-          paymentVerificationStatus: "pending",
-          paymentVerifiedAt: null
-        },
-        { runValidators: false }
-      );
-    }
-
-    if (normalizedPaymentType === "pro_account") {
+  if (payment.paymentType === "pro_account" && payment.companyId) {
+    if (status === "pending") {
       await markProPaymentPending({
-        companyId,
+        companyId: payment.companyId,
         paymentId: payment._id
       });
+    } else {
+      await applyProPaymentDecision({
+        companyId: payment.companyId,
+        paymentId: payment._id,
+        status
+      });
     }
+  }
+};
+
+const parsePaymentPayload = async (req, { isAdmin = false } = {}) => {
+  const payerType = normalizeText(req.body.payerType) === "student" ? "student" : "company";
+  const paymentTime = normalizeText(req.body.paymentTime) || buildTimeString(
+    req.body.hours,
+    req.body.minutes,
+    req.body.seconds
+  );
+
+  const payload = {
+    payerType,
+    companyId: normalizeText(req.body.companyId) || null,
+    studentId: normalizeText(req.body.studentId) || null,
+    internshipId: normalizeText(req.body.internshipId) || null,
+    internshipTitle: normalizeText(req.body.internshipTitle),
+    companyName: normalizeText(req.body.companyName),
+    studentName: normalizeText(req.body.studentName),
+    name: normalizeText(req.body.name),
+    nic: normalizeText(req.body.nic),
+    payerEmail: normalizeText(req.body.payerEmail),
+    phoneNumber: normalizeText(req.body.phoneNumber),
+    bankName: normalizeText(req.body.bankName),
+    branchName: normalizeText(req.body.branchName),
+    accountNumber: normalizeText(req.body.accountNumber),
+    amount: Number(req.body.amount),
+    paymentDate: req.body.paymentDate,
+    paymentTime,
+    referenceNo: normalizeText(req.body.referenceNo),
+    notes: normalizeText(req.body.notes),
+    slipUrl: normalizeText(req.body.slipUrl),
+    status: normalizeText(req.body.status) || "pending"
+  };
+
+  payload.paymentType = normalizePaymentType(req.body.paymentType, payerType);
+
+  if (!["pending", "verified", "rejected"].includes(payload.status)) {
+    return { error: "Invalid payment status" };
+  }
+
+  if (
+    !payload.name || !payload.nic || !payload.phoneNumber || !payload.bankName ||
+    !payload.branchName || !payload.accountNumber || !payload.referenceNo ||
+    !payload.paymentDate || !payload.paymentTime || !Number.isFinite(payload.amount) || payload.amount <= 0
+  ) {
+    return { error: "All required payment fields must be provided" };
+  }
+
+  if (!/^\d{10}$/.test(payload.phoneNumber)) {
+    return { error: "Mobile number must be 10 digits" };
+  }
+
+  const referenceError = validateReferenceNumber(payload.bankName, payload.referenceNo);
+  if (referenceError) {
+    return { error: referenceError };
+  }
+
+  if (payerType === "company") {
+    if (!isAdmin && !payload.companyId) {
+      return { error: "companyId is required" };
+    }
+
+    if (payload.companyId) {
+      if (!mongoose.Types.ObjectId.isValid(payload.companyId)) {
+        return { error: "Invalid companyId" };
+      }
+
+      const company = await Company.findById(payload.companyId).select("companyName email");
+      if (!company) {
+        return { error: "Company not found" };
+      }
+
+      if (!payload.companyName) {
+        payload.companyName = company.companyName;
+      }
+
+      if (!payload.payerEmail) {
+        payload.payerEmail = company.email || "";
+      }
+    }
+
+    if (!payload.companyName) {
+      return { error: "Company name is required for company payments" };
+    }
+
+    payload.studentId = null;
+    payload.studentName = "";
+  } else {
+    if (payload.studentId) {
+      if (!mongoose.Types.ObjectId.isValid(payload.studentId)) {
+        return { error: "Invalid studentId" };
+      }
+
+      const student = await Student.findById(payload.studentId).select("firstName lastName email");
+      if (!student) {
+        return { error: "Student not found" };
+      }
+
+      if (!payload.studentName) {
+        payload.studentName = `${student.firstName} ${student.lastName}`.trim();
+      }
+
+      if (!payload.payerEmail) {
+        payload.payerEmail = student.email || "";
+      }
+    }
+
+    if (!payload.studentName) {
+      return { error: "Student name is required for student payments" };
+    }
+
+    payload.companyId = null;
+    payload.companyName = "";
+    payload.internshipId = null;
+    payload.internshipTitle = "";
+  }
+
+  if (payload.internshipId) {
+    if (!mongoose.Types.ObjectId.isValid(payload.internshipId)) {
+      return { error: "Invalid internshipId" };
+    }
+
+    const internship = await Internship.findById(payload.internshipId).select("title");
+    if (!internship) {
+      return { error: "Internship not found" };
+    }
+
+    if (!payload.internshipTitle) {
+      payload.internshipTitle = internship.title || "";
+    }
+  }
+
+  if (payload.paymentType === "pro_account" && payload.payerType !== "company") {
+    return { error: "Pro account payments can only be created for companies" };
+  }
+
+  if (payload.paymentType === "pro_account" && payload.amount !== PRO_AMOUNT) {
+    return {
+      error: `Pro account payment must be exactly Rs ${PRO_AMOUNT.toFixed(2)}`
+    };
+  }
+
+  if (!isAdmin && !req.file) {
+    return { error: "Payment slip is required" };
+  }
+
+  if (!payload.slipUrl && req.file) {
+    payload.slipUrl = `${req.protocol}://${req.get("host")}/uploads/payments/${req.file.filename}`;
+  }
+
+  if (isAdmin && req.admin) {
+    payload.recordedByAdminId = req.admin._id;
+    payload.recordedByAdminName = req.admin.name || req.admin.fullName || "";
+  }
+
+  return { payload };
+};
+
+exports.createPayment = async (req, res) => {
+  try {
+    req.body.payerType = "company";
+    const { payload, error } = await parsePaymentPayload(req, { isAdmin: false });
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
+    }
+
+    const payment = await Payment.create(payload);
+    await syncPaymentRelations(payment);
 
     return res.status(201).json({ success: true, message: "Payment submitted successfully", data: payment });
   } catch (error) {
@@ -173,14 +305,28 @@ exports.getCompanyPayments = async (req, res) => {
 
 exports.getAllPayments = async (req, res) => {
   try {
-    const { paymentType } = req.query;
+    const { paymentType, payerType, status } = req.query;
     const query = {};
 
     if (paymentType) {
-      if (!["internship_post", "pro_account"].includes(paymentType)) {
+      if (!["internship_post", "pro_account", "student_payment", "other"].includes(paymentType)) {
         return res.status(400).json({ success: false, message: "Invalid paymentType" });
       }
       query.paymentType = paymentType;
+    }
+
+    if (payerType) {
+      if (!["company", "student"].includes(payerType)) {
+        return res.status(400).json({ success: false, message: "Invalid payerType" });
+      }
+      query.payerType = payerType;
+    }
+
+    if (status) {
+      if (!["pending", "verified", "rejected"].includes(status)) {
+        return res.status(400).json({ success: false, message: "Invalid status" });
+      }
+      query.status = status;
     }
 
     const payments = await Payment.find(query).sort({ createdAt: -1 });
@@ -213,32 +359,29 @@ exports.updatePaymentStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: "Payment not found" });
     }
 
-    if (payment.internshipId) {
-      const internshipStatus = status === "verified"
-        ? "verified"
-        : status === "rejected"
-          ? "rejected"
-          : "pending";
-
-      await Internship.findByIdAndUpdate(
-        payment.internshipId,
-        {
-          paymentVerificationStatus: internshipStatus,
-          paymentVerifiedAt: status === "verified" ? new Date() : null
-        },
-        { runValidators: false }
-      );
-    }
-
-    if (payment.paymentType === "pro_account") {
-      await applyProPaymentDecision({
-        companyId: payment.companyId,
-        paymentId: payment._id,
-        status
-      });
-    }
+    await syncPaymentRelations(payment, status);
 
     return res.status(200).json({ success: true, message: "Payment status updated", data: payment });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.createAdminPayment = async (req, res) => {
+  try {
+    const { payload, error } = await parsePaymentPayload(req, { isAdmin: true });
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
+    }
+
+    const payment = await Payment.create(payload);
+    await syncPaymentRelations(payment, payment.status);
+
+    return res.status(201).json({
+      success: true,
+      message: "Payment record created successfully",
+      data: payment
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

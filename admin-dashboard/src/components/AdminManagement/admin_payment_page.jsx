@@ -1,6 +1,6 @@
 import React from 'react';
-import AdminResourcePage from './admin_resource_page';
+import AdminPaymentManagement from './A_PaymentManagement';
 
-const AdminPaymentPage = () => <AdminResourcePage resourceKey="payments" />;
+const AdminPaymentPage = () => <AdminPaymentManagement />;
 
 export default AdminPaymentPage;
