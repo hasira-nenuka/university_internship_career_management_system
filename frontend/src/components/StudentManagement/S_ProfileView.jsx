@@ -72,13 +72,13 @@ function S_ProfileView() {
     }
   };
 
-  const sectionCard = "bg-white rounded-2xl shadow-lg p-6";
+  const sectionCard = "rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-[0_22px_60px_rgba(99,102,241,0.14)] backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/75 dark:shadow-[0_22px_60px_rgba(15,23,42,0.5)]";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.16),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.16),_transparent_26%),linear-gradient(180deg,_#eef2ff_0%,_#faf5ff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(129,140,248,0.12),_transparent_26%),linear-gradient(180deg,_#020617_0%,_#0f172a_55%,_#111827_100%)]">
 
       {/* HEADER */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-48 flex items-center justify-center shadow-lg">
+      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 h-52 flex items-center justify-center shadow-lg dark:from-slate-950 dark:via-indigo-950 dark:to-cyan-950">
         <h1 className="text-white text-4xl font-bold tracking-wide">
           My Profile
         </h1>
@@ -87,7 +87,7 @@ function S_ProfileView() {
       {/* PROFILE CARD */}
       <div className="max-w-5xl mx-auto px-4 -mt-20">
 
-        <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
+        <div className="rounded-[2rem] border border-white/70 bg-white/85 p-8 text-center shadow-[0_24px_70px_rgba(99,102,241,0.16)] backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/78 dark:shadow-[0_24px_70px_rgba(15,23,42,0.5)]">
 
           {/* Profile Image */}
           <div className="flex justify-center">
@@ -97,16 +97,16 @@ function S_ProfileView() {
                   ? resolveUploadUrl(student.profileImage)
                   : "/placeholder-profile.png"
               }
-              className="w-32 h-32 rounded-full border-4 border-indigo-500 shadow-lg object-cover"
+              className="w-32 h-32 rounded-full border-4 border-indigo-500 shadow-lg object-cover dark:border-cyan-400"
               alt="profile"
             />
           </div>
 
           {/* Name */}
-          <h2 className="text-3xl font-bold mt-4">
+          <h2 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">
             {student.firstName} {student.lastName}
           </h2>
-          <p className="text-gray-500">{student.email}</p>
+          <p className="text-gray-500 dark:text-slate-400">{student.email}</p>
 
           {/* CV BUTTON */}
           {student.cv && (
@@ -114,7 +114,7 @@ function S_ProfileView() {
               href={resolveUploadUrl(student.cv)}
               target="_blank"
               rel="noreferrer"
-              className="inline-block mt-4 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold shadow hover:scale-105 transition"
+              className="inline-block mt-4 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 px-6 py-2 text-white font-semibold shadow transition hover:scale-105 dark:from-indigo-500 dark:via-violet-500 dark:to-cyan-400"
             >
               View CV
             </a>
@@ -123,62 +123,72 @@ function S_ProfileView() {
         </div>
 
         {/* DETAILS */}
-        <div className="grid md:grid-cols-2 gap-6 mt-6">
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
 
           {/* BASIC */}
           <div className={sectionCard}>
-            <h3 className="text-lg font-bold mb-3 text-indigo-600">Basic Info</h3>
-            <p><b>Province:</b> {student.province || "Not provided"}</p>
-            <p><b>District:</b> {student.district || "Not provided"}</p>
-            <p><b>Contact:</b> {student.contactNumber || "Not provided"}</p>
+            <h3 className="mb-3 text-lg font-bold text-indigo-600 dark:text-cyan-300">Basic Info</h3>
+            <div className="space-y-2 text-slate-700 dark:text-slate-200">
+              <p><b>Province:</b> {student.province || "Not provided"}</p>
+              <p><b>District:</b> {student.district || "Not provided"}</p>
+              <p><b>Contact:</b> {student.contactNumber || "Not provided"}</p>
+            </div>
           </div>
 
           {/* SCHOOL */}
           <div className={sectionCard}>
-            <h3 className="text-lg font-bold mb-3 text-purple-600">School</h3>
-            <p><b>School:</b> {student.school || "Not provided"}</p>
-            <p><b>A/L Stream:</b> {student.localStream || "Not provided"}</p>
+            <h3 className="mb-3 text-lg font-bold text-violet-600 dark:text-violet-300">School</h3>
+            <div className="space-y-2 text-slate-700 dark:text-slate-200">
+              <p><b>School:</b> {student.school || "Not provided"}</p>
+              <p><b>A/L Stream:</b> {student.localStream || "Not provided"}</p>
+            </div>
           </div>
 
           {/* UNIVERSITY */}
           <div className={sectionCard}>
-            <h3 className="text-lg font-bold mb-3 text-indigo-600">University</h3>
-            <p><b>Level:</b> {student.eduLevel || "Not provided"}</p>
-            <p><b>University:</b> {student.university || "Not provided"}</p>
-            <p><b>Degree:</b> {student.degree || "Not provided"}</p>
+            <h3 className="mb-3 text-lg font-bold text-indigo-600 dark:text-cyan-300">University</h3>
+            <div className="space-y-2 text-slate-700 dark:text-slate-200">
+              <p><b>Level:</b> {student.eduLevel || "Not provided"}</p>
+              <p><b>University:</b> {student.university || "Not provided"}</p>
+              <p><b>Degree:</b> {student.degree || "Not provided"}</p>
+            </div>
           </div>
 
           {/* SKILLS */}
           <div className={sectionCard}>
-            <h3 className="text-lg font-bold mb-3 text-purple-600">Skills</h3>
-            <p><b>Frontend:</b> {formatList(student.frontendSkills)}</p>
-            <p><b>Backend:</b> {formatList(student.backendSkills)}</p>
-            <p><b>Database:</b> {formatList(student.databaseSkills)}</p>
-            <p><b>Preferred:</b> {student.preferredField || "Not provided"}</p>
+            <h3 className="mb-3 text-lg font-bold text-violet-600 dark:text-violet-300">Skills</h3>
+            <div className="space-y-2 text-slate-700 dark:text-slate-200">
+              <p><b>Frontend:</b> {formatList(student.frontendSkills)}</p>
+              <p><b>Backend:</b> {formatList(student.backendSkills)}</p>
+              <p><b>Database:</b> {formatList(student.databaseSkills)}</p>
+              <p><b>Preferred:</b> {student.preferredField || "Not provided"}</p>
+            </div>
           </div>
 
           {/* EXTRA */}
           <div className={`${sectionCard} md:col-span-2`}>
-            <h3 className="text-lg font-bold mb-3 text-indigo-600">Extra Details</h3>
-            <p><b>Leadership:</b> {student.leadership || "Not provided"}</p>
-            <p><b>Awards:</b> {student.awards || "Not provided"}</p>
-            <p><b>Bio:</b> {student.bio || "Not provided"}</p>
+            <h3 className="mb-3 text-lg font-bold text-indigo-600 dark:text-cyan-300">Extra Details</h3>
+            <div className="space-y-2 text-slate-700 dark:text-slate-200">
+              <p><b>Leadership:</b> {student.leadership || "Not provided"}</p>
+              <p><b>Awards:</b> {student.awards || "Not provided"}</p>
+              <p><b>Bio:</b> {student.bio || "Not provided"}</p>
+            </div>
           </div>
 
         </div>
 
         {/* BUTTONS */}
-        <div className="flex justify-center gap-4 mt-8 mb-10">
+        <div className="mb-10 mt-8 flex flex-wrap justify-center gap-4">
           <button
             onClick={() => navigate("/student/profile")}
-            className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow hover:scale-105 transition"
+            className="rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 px-6 py-2 text-white shadow transition hover:scale-105 dark:from-indigo-500 dark:via-violet-500 dark:to-cyan-400"
           >
             Update Profile
           </button>
 
           <button
             onClick={handleDelete}
-            className="px-6 py-2 bg-red-500 text-white rounded-lg shadow hover:scale-105 transition"
+            className="rounded-xl bg-rose-500 px-6 py-2 text-white shadow transition hover:scale-105 dark:bg-rose-600"
           >
             Delete Profile
           </button>

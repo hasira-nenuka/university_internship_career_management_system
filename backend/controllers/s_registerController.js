@@ -2,15 +2,26 @@ const Student = require("../models/s_registerModel");
 const StudentProfile = require("../models/s_ProfileModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const normalizeEmail = (email) => email?.trim().toLowerCase();
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^\d{10}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8}$/;
+const isDatabaseConnected = () => mongoose.connection.readyState === 1;
+
+const sendDatabaseUnavailable = (res) =>
+  res.status(503).json({
+    message: "Database is currently unavailable. Start MongoDB or update backend/.env with a working MONGO_URI before student login."
+  });
 
 // REGISTER
 exports.registerStudent = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return sendDatabaseUnavailable(res);
+    }
+
     const { firstName, lastName, address, contactNumber, email, password, confirmPassword } = req.body;
     const normalizedEmail = normalizeEmail(email);
 
@@ -67,6 +78,10 @@ exports.registerStudent = async (req, res) => {
 // LOGIN
 exports.loginStudent = async (req, res) => {
   try {
+    if (!isDatabaseConnected()) {
+      return sendDatabaseUnavailable(res);
+    }
+
     const { email, password } = req.body;
     const normalizedEmail = normalizeEmail(email);
 

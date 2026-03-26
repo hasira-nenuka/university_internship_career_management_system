@@ -161,21 +161,21 @@ function S_Profile() {
     "MySQL", "MongoDB", "PostgreSQL", "SQLite", "Redis", "Oracle", "SQL Server", "Cassandra", "DynamoDB", "Firebase", "CouchDB"
   ];
 
-  const sectionCardClass = "rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_24px_70px_rgba(99,102,241,0.14)] backdrop-blur";
-  const inputClass = "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10";
-  const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
-  const sectionTitleClass = "text-lg font-bold text-slate-900";
-  const sectionHintClass = "mt-1 text-sm text-slate-500";
+  const sectionCardClass = "rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-[0_24px_70px_rgba(99,102,241,0.14)] backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/75 dark:shadow-[0_24px_70px_rgba(15,23,42,0.5)]";
+  const inputClass = "w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-700 outline-none transition duration-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400 dark:focus:ring-cyan-400/10";
+  const labelClass = "mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200";
+  const sectionTitleClass = "text-lg font-bold text-slate-900 dark:text-white";
+  const sectionHintClass = "mt-1 text-sm text-slate-500 dark:text-slate-400";
   const skillChipClass = (isActive) => `flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition duration-200 ${
     isActive
-      ? "border-primary bg-primary/10 text-primary shadow-sm"
-      : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:bg-primary/5"
+      ? "border-indigo-500 bg-indigo-500/10 text-indigo-700 shadow-sm dark:border-cyan-400 dark:bg-cyan-400/10 dark:text-cyan-300"
+      : "border-slate-200 bg-white text-slate-600 hover:border-indigo-400 hover:bg-indigo-500/5 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300 dark:hover:border-cyan-400/50 dark:hover:bg-cyan-400/5"
   }`;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(6,182,212,0.18),_transparent_24%),linear-gradient(180deg,_#eef2ff_0%,_#f8fafc_42%,_#f8fafc_100%)]">
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-secondary to-accent">
-        <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.18),transparent_40%,rgba(255,255,255,0.08))]" />
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(6,182,212,0.18),_transparent_24%),linear-gradient(180deg,_#eef2ff_0%,_#f8fafc_42%,_#f8fafc_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(129,140,248,0.14),_transparent_22%),linear-gradient(180deg,_#020617_0%,_#0f172a_46%,_#111827_100%)]">
+      <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 dark:from-slate-950 dark:via-indigo-950 dark:to-cyan-950">
+        <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.18),transparent_40%,rgba(255,255,255,0.08))] dark:bg-[linear-gradient(120deg,rgba(148,163,184,0.12),transparent_40%,rgba(34,211,238,0.08))]" />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-6 py-12 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/70">
@@ -189,7 +189,7 @@ function S_Profile() {
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur-md">
+          <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur-md dark:border-cyan-400/10 dark:bg-slate-900/35">
             <p className="text-xs uppercase tracking-[0.22em] text-white/70">Profile status</p>
             <p className="mt-2 text-2xl font-bold">
               {student._id ? "Ready to update" : "Create profile"}
@@ -206,7 +206,7 @@ function S_Profile() {
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-5">
               <div
-                className="group relative h-28 w-28 overflow-hidden rounded-[2rem] border-4 border-white bg-slate-100 shadow-[0_18px_50px_rgba(99,102,241,0.2)] cursor-pointer"
+                className="group relative h-28 w-28 overflow-hidden rounded-[2rem] border-4 border-white bg-slate-100 shadow-[0_18px_50px_rgba(99,102,241,0.2)] cursor-pointer dark:border-slate-800 dark:bg-slate-800 dark:shadow-[0_18px_50px_rgba(8,47,73,0.35)]"
                 onClick={() => document.getElementById("profileInput").click()}
               >
                 <img
@@ -230,28 +230,28 @@ function S_Profile() {
               </div>
 
               <div>
-                <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <span className="inline-flex rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:bg-cyan-400/10 dark:text-cyan-300">
                   Student Identity
                 </span>
-                <h2 className="mt-3 text-3xl font-bold text-slate-900">
+                <h2 className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">
                   {student.firstName || "Your"} {student.lastName || "Profile"}
                 </h2>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                   {student.email || "Add your account details and present them clearly."}
                 </p>
               </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Profile image</p>
-                <p className="mt-1 text-sm text-slate-600">
+              <div className="rounded-2xl border border-indigo-500/10 bg-indigo-500/5 px-4 py-3 dark:border-cyan-400/10 dark:bg-cyan-400/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-700 dark:text-cyan-300">Profile image</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   Use a clear professional photo.
                 </p>
               </div>
-              <div className="rounded-2xl border border-accent/10 bg-accent/5 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">CV upload</p>
-                <p className="mt-1 text-sm text-slate-600">
+              <div className="rounded-2xl border border-violet-500/10 bg-violet-500/5 px-4 py-3 dark:border-violet-400/10 dark:bg-violet-400/5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-700 dark:text-violet-300">CV upload</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   Keep your latest resume attached.
                 </p>
               </div>
@@ -391,7 +391,7 @@ function S_Profile() {
 
             <div className="space-y-8">
               <div>
-                <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary">Frontend Languages</h4>
+                <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-cyan-300">Frontend Languages</h4>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {frontendLanguages.map((skill) => (
                     <label key={skill} className={skillChipClass(student.frontendSkills?.includes(skill) || false)}>
@@ -413,7 +413,7 @@ function S_Profile() {
               </div>
 
               <div>
-                <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-secondary">Backend Languages</h4>
+                <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-violet-700 dark:text-violet-300">Backend Languages</h4>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {backendLanguages.map((skill) => (
                     <label key={skill} className={skillChipClass(student.backendSkills?.includes(skill) || false)}>
@@ -435,7 +435,7 @@ function S_Profile() {
               </div>
 
               <div>
-                <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-accent">Database Skills</h4>
+                <h4 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-sky-300">Database Skills</h4>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {databaseSkills.map((skill) => (
                     <label key={skill} className={skillChipClass(student.databaseSkills?.includes(skill) || false)}>
@@ -534,14 +534,14 @@ function S_Profile() {
               <p className={sectionHintClass}>Upload your latest CV and keep it easy to access.</p>
             </div>
             <div className="space-y-5">
-              <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-5">
+              <div className="rounded-2xl border border-dashed border-indigo-500/30 bg-indigo-500/5 p-5 dark:border-cyan-400/20 dark:bg-cyan-400/5">
                 <label className={labelClass}>Upload CV</label>
                 <input
                   type="file"
                   onChange={handleCvChange}
-                  className={`${inputClass} file:mr-4 file:rounded-xl file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-secondary`}
+                  className={`${inputClass} file:mr-4 file:rounded-xl file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-violet-600 dark:file:bg-cyan-500 dark:hover:file:bg-sky-500`}
                 />
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
                   PDF format is recommended for better viewing.
                 </p>
               </div>
@@ -551,7 +551,7 @@ function S_Profile() {
                   href={resolveUploadUrl(student.cv)}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full items-center justify-center rounded-2xl border border-accent/20 bg-accent px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(6,182,212,0.25)] transition duration-200 hover:-translate-y-0.5 hover:bg-cyan-500"
+                  className="inline-flex w-full items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(6,182,212,0.25)] transition duration-200 hover:-translate-y-0.5 hover:bg-sky-500"
                 >
                   View Current CV
                 </a>
@@ -563,13 +563,13 @@ function S_Profile() {
         <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-end">
           <button
             onClick={() => navigate("/student/dashboard")}
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition duration-200 hover:border-primary/30 hover:text-primary"
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition duration-200 hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-cyan-400 dark:hover:text-cyan-300"
           >
             Back to Dashboard
           </button>
           <button
             onClick={handleSubmit}
-            className="rounded-2xl bg-gradient-to-r from-primary via-secondary to-accent px-8 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(99,102,241,0.32)] transition duration-200 hover:-translate-y-0.5"
+            className="rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(99,102,241,0.32)] transition duration-200 hover:-translate-y-0.5 dark:from-indigo-500 dark:via-violet-500 dark:to-cyan-400"
           >
             Save Profile
           </button>
