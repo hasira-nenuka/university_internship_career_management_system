@@ -62,6 +62,32 @@ const C_CompanyDashboard = () => {
         fetchInternships();
     }, [fetchCompanyData, fetchInternships]);
 
+    useEffect(() => {
+        if (activeTab === 'internships' || activeTab === 'overview') {
+            fetchInternships();
+        }
+    }, [activeTab, fetchInternships]);
+
+    useEffect(() => {
+        const refreshOnFocus = () => {
+            fetchInternships();
+        };
+
+        const refreshOnVisible = () => {
+            if (document.visibilityState === 'visible') {
+                fetchInternships();
+            }
+        };
+
+        window.addEventListener('focus', refreshOnFocus);
+        document.addEventListener('visibilitychange', refreshOnVisible);
+
+        return () => {
+            window.removeEventListener('focus', refreshOnFocus);
+            document.removeEventListener('visibilitychange', refreshOnVisible);
+        };
+    }, [fetchInternships]);
+
     const handleLogout = () => {
         logoutCompany();
         navigate('/');
