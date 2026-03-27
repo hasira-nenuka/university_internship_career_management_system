@@ -39,7 +39,8 @@ const createInternship = async (req, res) => {
             stipend,
             openings,
             deadline,
-            images
+            images,
+            paymentVerificationStatus: 'pending'
         });
         
         res.status(201).json({ success: true, data: internship });

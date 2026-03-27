@@ -201,6 +201,15 @@ export const getCompanyProAccount = async () => {
     }
 };
 
+export const requestProAccountUpgrade = async () => {
+    try {
+        const response = await axios.post(`${API_URL}/pro-accounts/request`, {}, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to start pro account payment request' };
+    }
+};
+
 // Direct Student Search (Pro Account)
 export const searchStudentsDirectly = async (category, district) => {
     try {

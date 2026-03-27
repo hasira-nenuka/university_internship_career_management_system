@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import AdminLayout from "./admin_layout";
 import { PAGE_ACCESS } from "./admin_utils";
@@ -45,6 +45,13 @@ const STATUS_STYLES = {
   verified: "bg-emerald-100 text-emerald-700",
   pending: "bg-amber-100 text-amber-700",
   rejected: "bg-rose-100 text-rose-700"
+};
+
+const formatStatusLabel = (status) => {
+  if (status === "verified") return "Verified";
+  if (status === "pending") return "Pending";
+  if (status === "rejected") return "Rejected";
+  return "Pending";
 };
 
 const PAYMENT_LABELS = {
@@ -123,13 +130,7 @@ const A_PaymentManagement = () => {
     setAdminSession(getStoredAdminSession());
   }, []);
 
-  useEffect(() => {
-    if (adminSession?.token) {
-      fetchPayments();
-    }
-  }, [adminSession]);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -140,7 +141,13 @@ const A_PaymentManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authConfig]);
+
+  useEffect(() => {
+    if (adminSession?.token) {
+      fetchPayments();
+    }
+  }, [adminSession, fetchPayments]);
 
   const handleStatusChange = async (paymentId, status) => {
     setActionLoadingId(paymentId);
@@ -148,9 +155,25 @@ const A_PaymentManagement = () => {
     setSuccess("");
 
     try {
-      await axios.put(`${API_URL}/payments/${paymentId}/status`, { status }, authConfig);
+      const response = await axios.put(
+        `${API_URL}/payments/${paymentId}/status`,
+        { status },
+        authConfig
+      );
+
+      const updatedPayment = response.data?.data;
+      setPayments((current) =>
+        current.map((payment) =>
+          payment._id === paymentId
+            ? {
+                ...payment,
+                ...(updatedPayment || {}),
+                status
+              }
+            : payment
+        )
+      );
       setSuccess(`Payment marked as ${status}.`);
-      await fetchPayments();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update payment");
     } finally {
@@ -499,7 +522,7 @@ const A_PaymentManagement = () => {
                       </td>
                       <td className="px-3 py-4">
                         <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_STYLES[payment.status] || STATUS_STYLES.pending}`}>
-                          {payment.status}
+                          {formatStatusLabel(payment.status)}
                         </span>
                       </td>
                       <td className="px-3 py-4">

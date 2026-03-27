@@ -1,24 +1,38 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { requestProAccountUpgrade } from "../CompanyManagement/C_CompanyUtils";
 
 const P_ProAccountUpgrade = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const companyId = useMemo(() => state?.companyId || localStorage.getItem("companyId") || "", [state]);
   const companyName = useMemo(() => state?.companyName || localStorage.getItem("companyName") || "", [state]);
 
-  const handleProceedToPayment = () => {
-    navigate("/payments/upload", {
-      state: {
-        companyId,
-        companyName,
-        paymentType: "pro_account",
-        fixedAmount: 6000,
-        planName: "Pro Account",
-        planCycleDays: 30
-      }
-    });
+  const handleProceedToPayment = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      await requestProAccountUpgrade();
+
+      navigate("/payments/upload", {
+        state: {
+          companyId,
+          companyName,
+          paymentType: "pro_account",
+          fixedAmount: 6000,
+          planName: "Pro Account",
+          planCycleDays: 30
+        }
+      });
+    } catch (err) {
+      setError(err.message || "Failed to start the pro account payment request.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,9 +72,10 @@ const P_ProAccountUpgrade = () => {
           <div className="mt-8 flex gap-3">
             <button
               onClick={handleProceedToPayment}
-              className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold"
+              disabled={loading}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold disabled:opacity-50"
             >
-              Continue to Payment
+              {loading ? "Please wait..." : "Continue to Payment"}
             </button>
             <button
               onClick={() => navigate("/company/dashboard", { state: { activeTab: "profile" } })}
@@ -69,6 +84,12 @@ const P_ProAccountUpgrade = () => {
               Back to Profile
             </button>
           </div>
+
+          {error ? (
+            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

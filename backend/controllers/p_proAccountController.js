@@ -51,6 +51,55 @@ const buildProResponse = (proAccount) => {
 exports.PRO_AMOUNT = PRO_AMOUNT;
 exports.PRO_CYCLE_DAYS = PRO_CYCLE_DAYS;
 
+exports.requestProAccountUpgrade = async (req, res) => {
+  try {
+    const companyId = req.company?._id;
+
+    if (!companyId) {
+      return res.status(401).json({ success: false, message: "Company authentication required" });
+    }
+
+    const existing = await ProAccount.findOne({ companyId }).sort({ updatedAt: -1 });
+
+    if (!existing) {
+      const created = await ProAccount.create({
+        companyId,
+        amount: PRO_AMOUNT,
+        cycleDays: PRO_CYCLE_DAYS,
+        status: "pending",
+        startsAt: null,
+        expiresAt: null,
+        lastPaymentId: null
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Pro account request is pending payment",
+        data: buildProResponse(created)
+      });
+    }
+
+    existing.amount = PRO_AMOUNT;
+    existing.cycleDays = PRO_CYCLE_DAYS;
+
+    if (existing.status !== "active") {
+      existing.status = "pending";
+      existing.startsAt = null;
+      existing.expiresAt = null;
+    }
+
+    await existing.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Pro account request is pending payment",
+      data: buildProResponse(existing)
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.getCompanyProAccount = async (req, res) => {
   try {
     const { companyId } = req.params;

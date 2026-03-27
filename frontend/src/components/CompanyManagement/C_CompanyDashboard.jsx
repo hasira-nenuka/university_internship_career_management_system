@@ -8,6 +8,8 @@ import CompanyProfile from './C_CompanyProfile';
 import ApplicationManagement from './C_ApplicationManagement';
 import CompanyReviews from './C_CompanyReviews';
 
+const INTERNSHIP_REFRESH_INTERVAL_MS = 10000;
+
 const C_CompanyDashboard = () => {
     const navigate = useNavigate();
     const { state } = useLocation();
@@ -66,6 +68,22 @@ const C_CompanyDashboard = () => {
         if (activeTab === 'internships' || activeTab === 'overview') {
             fetchInternships();
         }
+    }, [activeTab, fetchInternships]);
+
+    useEffect(() => {
+        if (activeTab !== 'internships' && activeTab !== 'overview') {
+            return undefined;
+        }
+
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                fetchInternships();
+            }
+        }, INTERNSHIP_REFRESH_INTERVAL_MS);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
     }, [activeTab, fetchInternships]);
 
     useEffect(() => {
