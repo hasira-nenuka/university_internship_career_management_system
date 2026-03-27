@@ -1,8 +1,5 @@
 const Company = require('../models/c_companyModel');
 const { generateToken } = require('../middleware/C_authMiddleware');
-const mongoose = require('mongoose');
-
-const isDatabaseConnected = () => mongoose.connection.readyState === 1;
 
 const sendDatabaseUnavailable = (res) =>
     res.status(503).json({
@@ -10,15 +7,22 @@ const sendDatabaseUnavailable = (res) =>
         message: 'Database is currently unavailable. Start MongoDB or update backend/.env with a working MONGO_URI before logging in.'
     });
 
+const isDatabaseUnavailableError = (error) => {
+    const message = error?.message || '';
+
+    return (
+        message.includes('buffering timed out') ||
+        message.includes('ECONNREFUSED') ||
+        message.includes('MongoServerSelectionError') ||
+        message.includes('Topology is closed')
+    );
+};
+
 // @desc    Register a new company
 // @route   POST /api/companies/register
 // @access  Public
 const registerCompany = async (req, res) => {
     try {
-        if (!isDatabaseConnected()) {
-            return sendDatabaseUnavailable(res);
-        }
-
         const { companyName, email, password, phone, address, website, industry, companySize, description } = req.body;
         
         // Validate required fields
@@ -69,6 +73,11 @@ const registerCompany = async (req, res) => {
         
     } catch (error) {
         console.error('Registration error:', error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -78,10 +87,6 @@ const registerCompany = async (req, res) => {
 // @access  Public
 const loginCompany = async (req, res) => {
     try {
-        if (!isDatabaseConnected()) {
-            return sendDatabaseUnavailable(res);
-        }
-
         const { email, password } = req.body;
         
         if (!email || !password) {
@@ -118,6 +123,11 @@ const loginCompany = async (req, res) => {
         
     } catch (error) {
         console.error('Login error:', error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -127,10 +137,6 @@ const loginCompany = async (req, res) => {
 // @access  Private/Company
 const getCompanyProfile = async (req, res) => {
     try {
-        if (!isDatabaseConnected()) {
-            return sendDatabaseUnavailable(res);
-        }
-
         const company = await Company.findById(req.params.id).select('-password');
         if (!company) {
             return res.status(404).json({ success: false, message: 'Company not found' });
@@ -140,6 +146,11 @@ const getCompanyProfile = async (req, res) => {
         
     } catch (error) {
         console.error(error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -149,10 +160,6 @@ const getCompanyProfile = async (req, res) => {
 // @access  Private/Company
 const updateCompanyProfile = async (req, res) => {
     try {
-        if (!isDatabaseConnected()) {
-            return sendDatabaseUnavailable(res);
-        }
-
         const company = await Company.findById(req.params.id);
         if (!company) {
             return res.status(404).json({ success: false, message: 'Company not found' });
@@ -168,6 +175,11 @@ const updateCompanyProfile = async (req, res) => {
         
     } catch (error) {
         console.error(error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -177,14 +189,15 @@ const updateCompanyProfile = async (req, res) => {
 // @access  Private/Admin
 const getAllCompanies = async (req, res) => {
     try {
-        if (!isDatabaseConnected()) {
-            return sendDatabaseUnavailable(res);
-        }
-
         const companies = await Company.find().select('-password').sort('-createdAt');
         res.json({ success: true, count: companies.length, data: companies });
     } catch (error) {
         console.error(error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
         res.status(500).json({ success: false, message: error.message });
     }
 };

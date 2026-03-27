@@ -124,7 +124,7 @@ function S_Dashboard() {
     companies: openCompanyProfileView,
     searchJobs: () => navigate("/student/search-jobs"),
     jobs: () => navigate("/student/jobs"),
-    apply: () => navigate("/student/jobs"),
+    apply: () => navigate("/student/apply-jobs"),
     applications: () => navigate("/student/applications"),
     recommendations: () => navigate("/student/jobs"),
   };
