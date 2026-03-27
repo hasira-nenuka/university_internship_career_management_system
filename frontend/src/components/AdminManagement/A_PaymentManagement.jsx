@@ -472,9 +472,6 @@ const A_PaymentManagement = () => {
             <p className="text-sm mt-1">{error}</p>
           </div>
         ) : filteredPayments.length === 0 ? (
-<<<<<<< HEAD
-          <div className="py-12 text-center text-slate-600">No payments found for the selected filters.</div>
-=======
           <div className="py-12 text-center">
             <p className="text-slate-600 text-lg">No payments found for the selected filters.</p>
             <p className="text-slate-500 text-sm mt-3">Payments will appear here when:</p>
@@ -483,7 +480,6 @@ const A_PaymentManagement = () => {
               <li>• You manually add payment records using the form above</li>
             </ul>
           </div>
->>>>>>> main
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full border-separate border-spacing-y-2 text-sm text-slate-700">

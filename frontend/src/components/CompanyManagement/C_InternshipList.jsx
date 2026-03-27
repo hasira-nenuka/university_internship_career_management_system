@@ -39,19 +39,17 @@ const C_InternshipList = ({ internships, onUpdate }) => {
     const [editForm, setEditForm] = useState({});
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
-<<<<<<< HEAD
     const normalizeVerificationStatus = (status) => {
         if (status === 'verified') return 'verified';
         if (status === 'rejected') return 'rejected';
         if (status === 'pending') return 'pending';
         return 'pending';
     };
-=======
+
     const totalInternships = internships.length;
     const activeInternships = internships.filter((item) => item.status === 'active').length;
     const totalApplications = internships.reduce((sum, item) => sum + (item.applications?.length || 0), 0);
     const verifiedInternships = internships.filter((item) => item.paymentVerificationStatus === 'verified').length;
->>>>>>> main
 
     const handleEdit = (internship) => {
         setEditingId(internship._id);
