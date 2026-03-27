@@ -11,7 +11,8 @@ import ProAccountUpgrade from './components/PaymentManagement/p_ProAccountUpgrad
 import AdminPaymentManagement from './components/AdminManagement/A_PaymentManagement';
 import StudentLogin from './components/StudentManagement/student_login';
 import StudentRegister from './components/StudentManagement/student_register';
-import StudentDashboard from './components/StudentManagement/student_dashboard';
+import StudentDashboard from './components/StudentManagement/S_Dashboard';
+import StudentJobs from './components/StudentManagement/S_Jobs';
 import StudentProfile from './components/StudentManagement/S_Profile';
 import StudentProfileView from './components/StudentManagement/S_ProfileView';
 import StudentProfileViewCompany from './components/StudentManagement/S_PviewCompany';
@@ -52,6 +53,7 @@ function App() {
           <Route path="/login/student" element={<StudentLogin />} />
           <Route path="/register/student" element={<StudentRegister />} />
           <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/student/jobs" element={<StudentJobs />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route path="/student/profile/view/:id" element={<StudentProfileView />} />
           <Route path="/student/profile/company-view" element={<StudentProfileViewCompany />} />
