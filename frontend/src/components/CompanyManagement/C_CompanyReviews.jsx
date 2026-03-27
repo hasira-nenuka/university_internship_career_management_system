@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { getCompanyReviews, submitCompanyReview } from './C_CompanyUtils';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getCompanyPayments, getCompanyReviews, submitCompanyReview } from './C_CompanyUtils';
 
 const initialForm = {
   rating: 5,
@@ -13,12 +13,20 @@ const statusTone = {
   closed: 'bg-slate-200 text-slate-700',
 };
 
+const paymentStatusTone = {
+  pending: 'bg-amber-100 text-amber-700',
+  verified: 'bg-emerald-100 text-emerald-700',
+  rejected: 'bg-rose-100 text-rose-700',
+};
+
 const C_CompanyReviews = () => {
   const [activePage, setActivePage] = useState('submit');
   const [formData, setFormData] = useState(initialForm);
   const [reviews, setReviews] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -36,6 +44,30 @@ const C_CompanyReviews = () => {
 
     loadReviews();
   }, []);
+
+  useEffect(() => {
+    const loadPayments = async () => {
+      try {
+        const result = await getCompanyPayments();
+        setPayments(result.data || []);
+      } catch (err) {
+        setError(err.message || 'Failed to load payment history');
+      } finally {
+        setPaymentsLoading(false);
+      }
+    };
+
+    loadPayments();
+  }, []);
+
+  const paymentSummary = useMemo(
+    () => ({
+      total: payments.length,
+      verified: payments.filter((payment) => payment.status === 'verified').length,
+      pending: payments.filter((payment) => payment.status === 'pending').length,
+    }),
+    [payments]
+  );
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -104,6 +136,20 @@ const C_CompanyReviews = () => {
             <div className="text-xs font-semibold uppercase tracking-[0.24em] opacity-80">Page 2</div>
             <div className="mt-2 text-lg font-bold">Review History</div>
             <div className="mt-1 text-sm opacity-80">Check review status and admin replies.</div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActivePage('payments')}
+            className={`rounded-2xl px-5 py-4 text-left transition ${
+              activePage === 'payments'
+                ? 'bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-lg'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <div className="text-xs font-semibold uppercase tracking-[0.24em] opacity-80">Page 3</div>
+            <div className="mt-2 text-lg font-bold">Payment History</div>
+            <div className="mt-1 text-sm opacity-80">Track payment records and approval status.</div>
           </button>
         </div>
       </div>
@@ -223,6 +269,106 @@ const C_CompanyReviews = () => {
                     Waiting for admin review.
                   </div>
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activePage === 'payments' && (
+        <div className="rounded-3xl border border-indigo-100 bg-white p-6 shadow">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-indigo-500">
+                Payment History
+              </p>
+              <h2 className="mt-3 text-2xl font-black text-slate-900">Track payment records for your company</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Review payment status changes, reference numbers, and linked internship titles.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-center">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total</div>
+                <div className="mt-2 text-2xl font-black text-slate-900">{paymentSummary.total}</div>
+              </div>
+              <div className="rounded-2xl bg-amber-50 px-4 py-3 text-center">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">Pending</div>
+                <div className="mt-2 text-2xl font-black text-amber-700">{paymentSummary.pending}</div>
+              </div>
+              <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-center">
+                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Verified</div>
+                <div className="mt-2 text-2xl font-black text-emerald-700">{paymentSummary.verified}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            {paymentsLoading && <div className="text-sm text-slate-500">Loading payment history...</div>}
+
+            {!paymentsLoading && payments.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-10 text-center text-sm text-slate-500">
+                No payment records found for this company yet.
+              </div>
+            )}
+
+            {payments.map((payment) => (
+              <div key={payment._id} className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <div className="text-lg font-bold text-slate-900">
+                      {payment.internshipTitle || 'Company Payment'}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      {payment.paymentType?.replaceAll('_', ' ') || 'payment'} • {new Date(payment.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${paymentStatusTone[payment.status] || 'bg-slate-200 text-slate-700'}`}>
+                    {payment.status}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Amount</div>
+                    <div className="mt-2 text-lg font-bold text-slate-900">Rs {Number(payment.amount || 0).toFixed(2)}</div>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Reference No</div>
+                    <div className="mt-2 text-sm font-semibold text-slate-900">{payment.referenceNo || '-'}</div>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Bank</div>
+                    <div className="mt-2 text-sm font-semibold text-slate-900">{payment.bankName || '-'}</div>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Payment Date</div>
+                    <div className="mt-2 text-sm font-semibold text-slate-900">
+                      {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : '-'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl bg-indigo-50 p-4 text-sm text-slate-700">
+                    <div><span className="font-semibold text-slate-900">Company ID:</span> {payment.companyId || '-'}</div>
+                    <div className="mt-2"><span className="font-semibold text-slate-900">Internship ID:</span> {payment.internshipId || '-'}</div>
+                    <div className="mt-2"><span className="font-semibold text-slate-900">Recorded Time:</span> {payment.paymentTime || '-'}</div>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
+                    <div><span className="font-semibold text-slate-900">Account Holder:</span> {payment.name || '-'}</div>
+                    <div className="mt-2"><span className="font-semibold text-slate-900">Email:</span> {payment.payerEmail || '-'}</div>
+                    <div className="mt-2"><span className="font-semibold text-slate-900">Phone:</span> {payment.phoneNumber || '-'}</div>
+                  </div>
+                </div>
+
+                {payment.notes ? (
+                  <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                    <span className="font-semibold text-slate-900">Notes:</span> {payment.notes}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

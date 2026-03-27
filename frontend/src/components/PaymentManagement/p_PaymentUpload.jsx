@@ -137,8 +137,8 @@ const P_PaymentUpload = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-primary to-secondary py-8">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-4xl border border-gray-200">
+    <div className="min-h-screen flex justify-center items-center bg-white dark:bg-slate-900 py-8 transition-colors duration-300">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-4xl border border-gray-200 dark:border-slate-700">
         <h2 className="text-2xl font-bold mb-2 text-center text-primary">Upload Payment Slip</h2>
         <p className="text-center text-gray-600 mb-6">
           {paymentType === "pro_account" ? "Pro Account Payment (Rs 6,000.00 / 30 days)" : "Internship Payment"}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { jsPDF } from 'jspdf';
 import { updateInternship, deleteInternship } from './C_CompanyUtils';
 
 const JOB_CATEGORIES = [
@@ -124,6 +125,109 @@ const C_InternshipList = ({ internships, onUpdate }) => {
         return `${status.charAt(0).toUpperCase()}${status.slice(1)}`;
     };
 
+    const getSafeText = (value) => {
+        if (value === null || value === undefined || value === '') return 'N/A';
+        if (Array.isArray(value)) return value.length ? value.join(', ') : 'N/A';
+        return String(value);
+    };
+
+    const downloadInternshipDetailsPdf = () => {
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        const lineHeight = 16;
+        const sectionGap = 12;
+        const companyName = localStorage.getItem('companyName') || 'Company';
+        const reportDate = new Date().toLocaleString();
+        let y = margin;
+
+        const ensureSpace = (neededHeight = lineHeight) => {
+            if (y + neededHeight > pageHeight - margin) {
+                doc.addPage();
+                y = margin;
+            }
+        };
+
+        const addWrappedText = (text, x, maxWidth, fontSize = 10) => {
+            doc.setFontSize(fontSize);
+            const wrapped = doc.splitTextToSize(text, maxWidth);
+            ensureSpace(wrapped.length * lineHeight + 4);
+            doc.text(wrapped, x, y);
+            y += wrapped.length * lineHeight;
+        };
+
+        const addField = (label, value) => {
+            const formattedValue = getSafeText(value);
+            const labelText = `${label}:`;
+            const labelWidth = 130;
+
+            ensureSpace(lineHeight * 2);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(labelText, margin, y);
+
+            doc.setFont('helvetica', 'normal');
+            const wrapped = doc.splitTextToSize(formattedValue, pageWidth - (margin * 2) - labelWidth);
+            doc.text(wrapped, margin + labelWidth, y);
+            y += wrapped.length * lineHeight;
+        };
+
+        doc.setFillColor(14, 116, 144);
+        doc.rect(0, 0, pageWidth, 82, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text('INTERNSHIP DETAILS REPORT', margin, 36);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Company: ${companyName}`, margin, 56);
+        doc.text(`Generated: ${reportDate}`, margin, 72);
+
+        y = 112;
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('Summary', margin, y);
+        y += lineHeight + 2;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        addWrappedText(`Total internships: ${totalInternships}   |   Active: ${activeInternships}   |   Verified: ${verifiedInternships}   |   Applications: ${totalApplications}`, margin, pageWidth - (margin * 2));
+        y += sectionGap;
+
+        internships.forEach((internship, index) => {
+            ensureSpace(90);
+
+            doc.setDrawColor(210, 214, 220);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 14;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            addWrappedText(`Internship ${index + 1}: ${getSafeText(internship.title)}`, margin, pageWidth - (margin * 2), 12);
+            y += 4;
+
+            addField('Status', formatStatusLabel(internship.status));
+            addField('Verification', getVerificationLabel(internship.paymentVerificationStatus));
+            addField('Type', internship.type);
+            addField('Location', internship.location);
+            addField('Duration', internship.duration);
+            addField('Stipend', internship.stipend);
+            addField('Openings', internship.openings);
+            addField('Applications', internship.applications?.length || 0);
+            addField('Skills', internship.skills);
+            addField('Posted Date', internship.createdAt ? new Date(internship.createdAt).toLocaleDateString() : 'N/A');
+            addField('Description', internship.description);
+
+            y += sectionGap;
+        });
+
+        const fileDate = new Date().toISOString().slice(0, 10);
+        doc.save(`internship-details-${fileDate}.pdf`);
+    };
+
     return (
         <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-700/50 dark:bg-[#0b1f43] dark:shadow-[0_24px_60px_-24px_rgba(15,23,42,0.9)]">
             <div className="pointer-events-none absolute inset-0">
@@ -143,6 +247,13 @@ const C_InternshipList = ({ internships, onUpdate }) => {
                             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-300">
                                 Curate every listing from one studio-style dashboard. Update details, track applications, and keep opportunities fresh.
                             </p>
+                            <button
+                                onClick={downloadInternshipDetailsPdf}
+                                disabled={!internships.length}
+                                className="mt-4 inline-flex items-center rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-cyan-400/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
+                            >
+                                Download Details PDF
+                            </button>
                         </div>
 
                         <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:w-auto">

@@ -102,6 +102,17 @@ export const getCompanyInternships = async () => {
     }
 };
 
+// Get Company Payments
+export const getCompanyPayments = async () => {
+    try {
+        const companyId = localStorage.getItem('companyId');
+        const response = await axios.get(`${API_URL}/payments/company/${companyId}`, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Failed to fetch company payments' };
+    }
+};
+
 // Update Internship
 export const updateInternship = async (internshipId, updateData) => {
     try {
