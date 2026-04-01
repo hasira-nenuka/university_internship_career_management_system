@@ -1,6 +1,8 @@
 const Company = require('../models/c_companyModel');
 const { generateToken } = require('../middleware/C_authMiddleware');
 const mongoose = require('mongoose');
+const StudentProfile = require('../models/s_ProfileModel');
+const { ensureProAccess } = require('./p_proAccountController');
 
 const isDatabaseConnected = () => mongoose.connection.readyState === 1;
 
@@ -189,10 +191,127 @@ const getAllCompanies = async (req, res) => {
     }
 };
 
+const CATEGORY_KEYWORDS = {
+    'Frontend Developer': ['frontend', 'react', 'javascript', 'html', 'css', 'ui', 'ux'],
+    'Backend Developer': ['backend', 'node', 'python', 'java', 'php', 'api', 'server'],
+    'Full Stack Developer': ['frontend', 'backend', 'full stack', 'react', 'node'],
+    'Mobile App Developer': ['mobile', 'flutter', 'react native', 'android', 'ios'],
+    'QA Engineer': ['qa', 'tester', 'testing'],
+    'Software Tester': ['tester', 'testing', 'qa'],
+    'Automation Tester': ['automation', 'selenium', 'cypress', 'playwright'],
+    'DevOps Engineer': ['devops', 'docker', 'kubernetes', 'ci/cd', 'aws'],
+    'Cloud Engineer': ['cloud', 'aws', 'azure', 'gcp'],
+    'System Administrator': ['system admin', 'sysadmin', 'network', 'linux'],
+    'Data Analyst': ['data', 'sql', 'excel', 'power bi', 'tableau', 'analytics'],
+    'Data Scientist': ['data science', 'machine learning', 'python', 'statistics'],
+    'Machine Learning Engineer': ['machine learning', 'ai', 'python', 'tensorflow', 'pytorch'],
+    'UI/UX Designer': ['ui', 'ux', 'figma', 'design', 'prototype'],
+    'Project Manager': ['project management', 'agile', 'scrum', 'planning'],
+    'Product Manager': ['product', 'roadmap', 'strategy'],
+    'Business Analyst': ['business', 'analysis', 'requirements'],
+    'Cybersecurity Analyst': ['security', 'cyber', 'penetration', 'risk']
+};
+
+const buildCategoryMatchScore = (profile, category) => {
+    const searchableText = [
+        profile.preferredField,
+        ...(profile.frontendSkills || []),
+        ...(profile.backendSkills || []),
+        ...(profile.databaseSkills || []),
+        profile.degree,
+        profile.bio
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    const keywords = CATEGORY_KEYWORDS[category] || [String(category || '').toLowerCase()];
+    const hitCount = keywords.filter((keyword) => searchableText.includes(keyword.toLowerCase())).length;
+    const preferredHit = profile.preferredField && profile.preferredField.toLowerCase().includes(String(category || '').toLowerCase());
+
+    return Math.min(100, (preferredHit ? 60 : 0) + hitCount * 15 + (searchableText.includes(String(category || '').toLowerCase()) ? 20 : 0));
+};
+
+// @desc    Search student profiles for company shortlist/recommendations
+// @route   GET /api/company/:companyId/search-students
+// @access  Private/Company (Pro Account)
+const searchStudents = async (req, res) => {
+    try {
+        if (!isDatabaseConnected()) {
+            return sendDatabaseUnavailable(res);
+        }
+
+        const { companyId } = req.params;
+        const { category, district } = req.query;
+
+        if (!mongoose.Types.ObjectId.isValid(companyId)) {
+            return res.status(400).json({ success: false, message: 'Invalid companyId' });
+        }
+
+        if (!req.company || req.company._id.toString() !== companyId) {
+            return res.status(403).json({ success: false, message: 'Not authorized to search for this company' });
+        }
+
+        const proAccess = await ensureProAccess(companyId);
+        if (!proAccess.allowed) {
+            return res.status(403).json({ success: false, message: 'Pro account required for student search' });
+        }
+
+        if (!category || !district) {
+            return res.status(400).json({ success: false, message: 'Category and district are required' });
+        }
+
+        const districtRegex = new RegExp(`^${String(district).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+        const profiles = await StudentProfile.find({ district: districtRegex }).sort({ createdAt: -1 });
+
+        const matchedStudents = profiles
+            .map((profile) => {
+                const matchScore = buildCategoryMatchScore(profile, category);
+                const matchedKeywords = (CATEGORY_KEYWORDS[category] || [])
+                    .filter((keyword) => [
+                        profile.preferredField,
+                        ...(profile.frontendSkills || []),
+                        ...(profile.backendSkills || []),
+                        ...(profile.databaseSkills || []),
+                        profile.degree,
+                        profile.bio
+                    ].filter(Boolean).join(' ').toLowerCase().includes(keyword.toLowerCase()));
+
+                return {
+                    ...profile.toObject(),
+                    matchScore,
+                    recommendationDetails: {
+                        category,
+                        district,
+                        matchedKeywords,
+                        reasons: [
+                            profile.district ? 'District matches the selected area' : 'District not listed',
+                            profile.preferredField ? `Preferred field: ${profile.preferredField}` : 'No preferred field selected',
+                            matchedKeywords.length > 0 ? `Relevant keywords: ${matchedKeywords.slice(0, 4).join(', ')}` : 'No keyword overlap found'
+                        ]
+                    }
+                };
+            })
+            .filter((profile) => profile.matchScore > 0)
+            .sort((a, b) => b.matchScore - a.matchScore);
+
+        return res.json({
+            success: true,
+            count: matchedStudents.length,
+            filters: { category, district },
+            data: matchedStudents
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     registerCompany,
     loginCompany,
     getCompanyProfile,
     updateCompanyProfile,
-    getAllCompanies
+    getAllCompanies,
+    searchStudents
 };
