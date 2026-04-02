@@ -11,9 +11,33 @@ const applicationSchema = new mongoose.Schema({
         ref: 'Student',
         required: true
     },
+    studentProfileId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'StudentProfile',
+        default: null
+    },
+    studentSnapshot: {
+        firstName: { type: String, default: '' },
+        lastName: { type: String, default: '' },
+        fullName: { type: String, default: '' },
+        email: { type: String, default: '' },
+        contactNumber: { type: String, default: '' },
+        district: { type: String, default: '' },
+        province: { type: String, default: '' },
+        university: { type: String, default: '' },
+        degree: { type: String, default: '' },
+        eduLevel: { type: String, default: '' },
+        preferredField: { type: String, default: '' },
+        frontendSkills: [{ type: String }],
+        backendSkills: [{ type: String }],
+        databaseSkills: [{ type: String }],
+        cv: { type: String, default: '' },
+        profileImage: { type: String, default: '' },
+        bio: { type: String, default: '' }
+    },
     coverLetter: {
         type: String,
-        required: true,
+        default: '',
         maxlength: 2000
     },
     resume: {

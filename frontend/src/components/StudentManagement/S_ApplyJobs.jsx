@@ -5,6 +5,7 @@ import {
   FaRegClock,
   FaBuilding,
   FaUsers,
+  FaBullseye,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -19,9 +20,30 @@ const getStudentSession = () => {
   const token = localStorage.getItem("token") || "";
 
   return {
-    studentId: student?._id || account?._id || "",
+    studentProfile: student || null,
+    studentId: account?._id || "",
     token,
   };
+};
+
+const normalizeText = (value) => String(value || "").trim().toLowerCase();
+
+const isPreferredMatch = (internship, preferredField) => {
+  const preferred = normalizeText(preferredField);
+  if (!preferred) return false;
+
+  const title = normalizeText(internship?.title);
+  const description = normalizeText(internship?.description);
+  const skills = Array.isArray(internship?.skills)
+    ? internship.skills.map((skill) => normalizeText(skill)).join(" ")
+    : normalizeText(internship?.skills);
+
+  return (
+    title.includes(preferred) ||
+    preferred.includes(title) ||
+    description.includes(preferred) ||
+    skills.includes(preferred)
+  );
 };
 
 const getVerificationColor = (status) => {
@@ -52,10 +74,31 @@ function S_ApplyJobs() {
   const [error, setError] = useState("");
   const [applyingId, setApplyingId] = useState("");
   const [notice, setNotice] = useState("");
+  const [appliedIds, setAppliedIds] = useState([]);
 
-  const verifiedInternships = useMemo(
-    () => internships.filter((item) => item.paymentVerificationStatus === "verified"),
-    [internships]
+  const { studentProfile, studentId, token } = useMemo(() => getStudentSession(), []);
+  const preferredField = studentProfile?.preferredField || "";
+
+  const verifiedInternships = useMemo(() => {
+    const verified = internships.filter(
+      (item) => item.paymentVerificationStatus === "verified"
+    );
+
+    return [...verified].sort((a, b) => {
+      const aMatch = isPreferredMatch(a, preferredField);
+      const bMatch = isPreferredMatch(b, preferredField);
+
+      if (aMatch === bMatch) {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+
+      return aMatch ? -1 : 1;
+    });
+  }, [internships, preferredField]);
+
+  const preferredMatches = useMemo(
+    () => verifiedInternships.filter((item) => isPreferredMatch(item, preferredField)),
+    [verifiedInternships, preferredField]
   );
 
   useEffect(() => {
@@ -79,9 +122,33 @@ function S_ApplyJobs() {
     loadInternships();
   }, []);
 
-  const handleApply = async (internshipId) => {
-    const { studentId, token } = getStudentSession();
+  useEffect(() => {
+    const loadApplications = async () => {
+      if (!token || !studentId) return;
 
+      try {
+        const response = await axios.get(
+          `${APPLICATIONS_API_URL}/student/${studentId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const items = Array.isArray(response.data?.data) ? response.data.data : [];
+        setAppliedIds(
+          items.map((item) => item.internshipId?._id).filter(Boolean)
+        );
+      } catch (err) {
+        console.error("Failed to load applications", err);
+      }
+    };
+
+    loadApplications();
+  }, [studentId, token]);
+
+  const handleApply = async (internshipId) => {
     if (!token || !studentId) {
       navigate("/login/student");
       return;
@@ -95,7 +162,6 @@ function S_ApplyJobs() {
         APPLICATIONS_API_URL,
         {
           internshipId,
-          studentId,
           coverLetter: "",
           resume: "",
         },
@@ -107,6 +173,9 @@ function S_ApplyJobs() {
       );
 
       setNotice(response.data?.message || "Application submitted successfully");
+      setAppliedIds((current) =>
+        current.includes(internshipId) ? current : [...current, internshipId]
+      );
     } catch (err) {
       setNotice(err.response?.data?.message || "Failed to apply for internship");
     } finally {
@@ -123,10 +192,10 @@ function S_ApplyJobs() {
               Apply Jobs
             </p>
             <h1 className="mt-3 text-4xl font-black text-slate-900 dark:text-white">
-              Verified Internship Posts
+              Matching Internship Posts
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-300">
-              This list shows verified internship posts with full details. Click Apply Now to submit your application.
+              This page only shows verified internship posts that match the student's preferred field from the profile.
             </p>
           </div>
 
@@ -145,6 +214,21 @@ function S_ApplyJobs() {
           </div>
         )}
 
+        {preferredField && !loading && !error && (
+          <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+            <span className="inline-flex items-center gap-2 font-semibold">
+              <FaBullseye />
+              Preferred Field
+            </span>
+            <span className="rounded-full bg-white px-3 py-1 font-semibold text-cyan-700 dark:bg-slate-900 dark:text-cyan-200">
+              {preferredField}
+            </span>
+            <span>
+              {preferredMatches.length} matching post{preferredMatches.length === 1 ? "" : "s"} found
+            </span>
+          </div>
+        )}
+
         {loading ? (
           <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
             Loading verified internships...
@@ -153,14 +237,28 @@ function S_ApplyJobs() {
           <div className="rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center text-rose-700 shadow-sm dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200">
             {error}
           </div>
+        ) : !preferredField ? (
+          <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm dark:border-slate-600 dark:bg-slate-900">
+            <p className="text-xl font-semibold text-slate-900 dark:text-white">Preferred field is not selected</p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Update the student profile and choose a preferred area to see matching internship posts here.
+            </p>
+          </div>
         ) : verifiedInternships.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm dark:border-slate-600 dark:bg-slate-900">
             <p className="text-xl font-semibold text-slate-900 dark:text-white">No verified internship posts available now</p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Please check again later for new verified openings.</p>
           </div>
+        ) : preferredMatches.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm dark:border-slate-600 dark:bg-slate-900">
+            <p className="text-xl font-semibold text-slate-900 dark:text-white">No matching internship posts found</p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              There are no verified posts yet for the preferred field `{preferredField}`.
+            </p>
+          </div>
         ) : (
           <div className="space-y-5">
-            {verifiedInternships.map((internship) => (
+            {preferredMatches.map((internship) => (
               <div
                 key={internship._id}
                 className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
@@ -187,6 +285,11 @@ function S_ApplyJobs() {
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getVerificationColor(internship.paymentVerificationStatus)}`}>
                         Verified
                       </span>
+                      {isPreferredMatch(internship, preferredField) && (
+                        <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-200">
+                          Matches Your Preference
+                        </span>
+                      )}
                       <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getTypeStyle(internship.type)}`}>
                         {internship.type || "N/A"}
                       </span>
@@ -198,10 +301,14 @@ function S_ApplyJobs() {
                   </div>
                   <button
                     onClick={() => handleApply(internship._id)}
-                    disabled={applyingId === internship._id}
+                    disabled={applyingId === internship._id || appliedIds.includes(internship._id)}
                     className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02] disabled:opacity-60"
                   >
-                    {applyingId === internship._id ? "Applying..." : "Apply Now"}
+                    {appliedIds.includes(internship._id)
+                      ? "Already Applied"
+                      : applyingId === internship._id
+                      ? "Applying..."
+                      : "Apply Now"}
                   </button>
                 </div>
 
