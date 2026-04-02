@@ -364,6 +364,18 @@ const C_CompanyReviews = () => {
                   </div>
                 </div>
 
+                {payment.status === 'rejected' && payment.rejectionReason ? (
+                  <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                    <div className="font-semibold text-rose-900">Admin Notification</div>
+                    <p className="mt-2 leading-6">{payment.rejectionReason}</p>
+                    {payment.rejectionNotifiedAt ? (
+                      <div className="mt-2 text-xs text-rose-600">
+                        Sent on {new Date(payment.rejectionNotifiedAt).toLocaleString()}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 {payment.notes ? (
                   <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
                     <span className="font-semibold text-slate-900">Notes:</span> {payment.notes}

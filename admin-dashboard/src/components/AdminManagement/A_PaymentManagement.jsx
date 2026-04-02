@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "./admin_layout";
 import { downloadFilteredPdfReport } from "./admin_pdf_utils";
 import { PAGE_ACCESS } from "./admin_utils";
@@ -67,6 +68,7 @@ const getStoredAdminSession = () => {
 };
 
 const A_PaymentManagement = () => {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [filters, setFilters] = useState({ status: "all" });
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,6 +79,8 @@ const A_PaymentManagement = () => {
   const [adminSession, setAdminSession] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
+  const [rejectingPayment, setRejectingPayment] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const authConfig = useMemo(() => {
     const token = adminSession?.token;
@@ -191,6 +195,61 @@ const A_PaymentManagement = () => {
     }
   };
 
+  const openRejectDialog = (payment) => {
+    setRejectingPayment(payment);
+    setRejectionReason(payment?.rejectionReason || "");
+    setError("");
+    setSuccess("");
+  };
+
+  const closeRejectDialog = () => {
+    setRejectingPayment(null);
+    setRejectionReason("");
+  };
+
+  const handleRejectSubmit = async () => {
+    if (!rejectingPayment?._id) {
+      return;
+    }
+
+    if (!rejectionReason.trim()) {
+      setError("Please enter the reason for rejecting this payment.");
+      return;
+    }
+
+    setActionLoadingId(rejectingPayment._id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await axios.put(
+        `${API_URL}/payments/${rejectingPayment._id}/status`,
+        { status: "rejected", rejectionReason: rejectionReason.trim() },
+        authConfig
+      );
+
+      const updatedPayment = response.data?.data;
+      setPayments((current) =>
+        current.map((payment) =>
+          payment._id === rejectingPayment._id
+            ? {
+                ...payment,
+                ...(updatedPayment || {}),
+                status: "rejected",
+                rejectionReason: rejectionReason.trim()
+              }
+            : payment
+        )
+      );
+      setSuccess("Payment rejected and company notification saved.");
+      closeRejectDialog();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to reject payment");
+    } finally {
+      setActionLoadingId("");
+    }
+  };
+
   const handleFormChange = (event) => {
     const { name, value } = event.target;
     setFormData((current) => ({ ...current, [name]: value }));
@@ -284,7 +343,7 @@ const A_PaymentManagement = () => {
     >
       <div className="space-y-6">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
               <p className="text-sm text-slate-500">Total Records</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{paymentSummary.total}</p>
@@ -298,6 +357,16 @@ const A_PaymentManagement = () => {
               <p className="mt-2 text-2xl font-bold text-slate-900">
                 Rs {paymentSummary.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
+            </div>
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+              <p className="text-sm text-indigo-600">Partner Insights</p>
+              <button
+                type="button"
+                onClick={() => navigate("/payments/top-partners")}
+                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-violet-700 to-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-violet-800 hover:to-blue-700"
+              >
+                Top Partners
+              </button>
             </div>
           </div>
         </div>
@@ -568,8 +637,8 @@ const A_PaymentManagement = () => {
                           </button>
                           <button
                             type="button"
-                            disabled={actionLoadingId === payment._id || payment.status === "rejected"}
-                            onClick={() => handleStatusChange(payment._id, "rejected")}
+                            disabled={actionLoadingId === payment._id}
+                            onClick={() => openRejectDialog(payment)}
                             className="rounded-lg bg-rose-600 px-3 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
                           >
                             Reject
@@ -584,6 +653,63 @@ const A_PaymentManagement = () => {
           )}
         </div>
       </div>
+
+      {rejectingPayment ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900">Reject Payment</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Type the reason below. This message will be shown to the company as a notification.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeRejectDialog}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
+              <div><span className="font-semibold text-slate-900">Company:</span> {displayPartyName(rejectingPayment)}</div>
+              <div className="mt-2"><span className="font-semibold text-slate-900">Amount:</span> Rs {Number(rejectingPayment.amount || 0).toFixed(2)}</div>
+              <div className="mt-2"><span className="font-semibold text-slate-900">Reference:</span> {rejectingPayment.referenceNo || "-"}</div>
+            </div>
+
+            <label className="mt-5 block text-sm text-slate-700">
+              <span className="mb-2 block font-medium">Reason for rejecting</span>
+              <textarea
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                rows="5"
+                placeholder="Example: Payment slip is unclear, reference number does not match bank rules, or amount is incorrect."
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
+              />
+            </label>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeRejectDialog}
+                className="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoadingId === rejectingPayment._id}
+                onClick={handleRejectSubmit}
+                className="rounded-lg bg-rose-600 px-5 py-3 font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+              >
+                {actionLoadingId === rejectingPayment._id ? "Sending..." : "Send Rejection"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AdminLayout>
   );
 };

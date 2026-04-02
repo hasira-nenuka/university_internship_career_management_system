@@ -47,6 +47,8 @@ const paymentSchema = new mongoose.Schema(
     referenceNo: { type: String, required: true, trim: true },
     slipUrl: { type: String, default: "" },
     notes: { type: String, default: "", trim: true },
+    rejectionReason: { type: String, default: "", trim: true },
+    rejectionNotifiedAt: { type: Date, default: null },
     recordedByAdminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
