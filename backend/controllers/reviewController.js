@@ -4,6 +4,9 @@ const sanitizeReview = (reviewDoc) => ({
   _id: reviewDoc._id,
   companyId: reviewDoc.companyId,
   companyName: reviewDoc.companyName,
+  studentId: reviewDoc.studentId,
+  studentName: reviewDoc.studentName,
+  reviewerType: reviewDoc.reviewerType,
   rating: reviewDoc.rating,
   title: reviewDoc.title,
   comment: reviewDoc.comment,
@@ -31,6 +34,7 @@ exports.createCompanyReview = async (req, res) => {
     const review = await Review.create({
       companyId: req.company._id,
       companyName: req.company.companyName,
+      reviewerType: 'Company',
       rating: Number(rating),
       title: title.trim(),
       comment: comment.trim(),
@@ -48,7 +52,53 @@ exports.getCompanyReviews = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Company authentication required' });
     }
 
-    const reviews = await Review.find({ companyId: req.company._id }).sort({ createdAt: -1 });
+    const reviews = await Review.find({ 
+      companyId: req.company._id,
+      reviewerType: 'Company' 
+    }).sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, data: reviews.map(sanitizeReview) });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.createStudentReview = async (req, res) => {
+  try {
+    const { rating, title, comment } = req.body;
+
+    if (!req.student) {
+      return res.status(401).json({ success: false, message: 'Student authentication required' });
+    }
+
+    if (!rating || !title || !comment) {
+      return res.status(400).json({ success: false, message: 'Rating, title, and comment are required' });
+    }
+
+    const review = await Review.create({
+      studentId: req.student._id,
+      studentName: `${req.student.firstName} ${req.student.lastName}`,
+      reviewerType: 'Student',
+      rating: Number(rating),
+      title: title.trim(),
+      comment: comment.trim(),
+    });
+
+    return res.status(201).json({ success: true, data: sanitizeReview(review) });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getStudentReviews = async (req, res) => {
+  try {
+    if (!req.student) {
+      return res.status(401).json({ success: false, message: 'Student authentication required' });
+    }
+
+    const reviews = await Review.find({ 
+      studentId: req.student._id,
+      reviewerType: 'Student' 
+    }).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, data: reviews.map(sanitizeReview) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

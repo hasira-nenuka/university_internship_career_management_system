@@ -5,12 +5,28 @@ const reviewSchema = new mongoose.Schema(
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
-      required: true,
+      required: false, // Optional if student review
     },
     companyName: {
       type: String,
-      required: true,
+      required: false, // Optional if student review
       trim: true,
+    },
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Student',
+      required: false, // Optional if company review
+    },
+    studentName: {
+      type: String,
+      required: false, // Optional if company review
+      trim: true,
+    },
+    reviewerType: {
+      type: String,
+      enum: ['Company', 'Student'],
+      required: true,
+      default: 'Company',
     },
     rating: {
       type: Number,

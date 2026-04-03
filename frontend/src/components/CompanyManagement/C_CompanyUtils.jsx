@@ -74,7 +74,7 @@ const getAuthHeader = () => {
     const token = normalizeToken(localStorage.getItem('companyToken'));
 
     if (!token) {
-        throw { message: 'Company session expired. Please login again.' };
+        throw new Error('Company session expired. Please login again.');
     }
 
     return {
