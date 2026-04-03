@@ -239,6 +239,42 @@ const AdminReviewPage = () => {
     }).sort((a, b) => b.reviews.length - a.reviews.length);
   }, [filteredReviews]);
 
+  const companyProfileAnalysis = useMemo(() => {
+    const companyReviews = filteredReviews.filter((review) => review.reviewerType !== 'Student');
+    const avgProfileRating = groupedByCompany.length
+      ? (groupedByCompany.reduce((acc, company) => acc + parseFloat(company.avgRating || 0), 0) / groupedByCompany.length).toFixed(1)
+      : '0.0';
+    const mostActive = groupedByCompany[0];
+    const repliedCount = companyReviews.filter((review) => Boolean(review.adminReply)).length;
+    const responseRate = companyReviews.length ? Math.round((repliedCount / companyReviews.length) * 100) : 0;
+
+    return {
+      profiles: groupedByCompany.length,
+      avgProfileRating,
+      mostActiveName: mostActive?.name || 'N/A',
+      mostActiveCount: mostActive?.reviews.length || 0,
+      responseRate,
+    };
+  }, [filteredReviews, groupedByCompany]);
+
+  const studentProfileAnalysis = useMemo(() => {
+    const studentReviews = filteredReviews.filter((review) => review.reviewerType === 'Student');
+    const avgProfileRating = groupedByStudent.length
+      ? (groupedByStudent.reduce((acc, student) => acc + parseFloat(student.avgRating || 0), 0) / groupedByStudent.length).toFixed(1)
+      : '0.0';
+    const mostActive = groupedByStudent[0];
+    const repliedCount = studentReviews.filter((review) => Boolean(review.adminReply)).length;
+    const responseRate = studentReviews.length ? Math.round((repliedCount / studentReviews.length) * 100) : 0;
+
+    return {
+      profiles: groupedByStudent.length,
+      avgProfileRating,
+      mostActiveName: mostActive?.name || 'N/A',
+      mostActiveCount: mostActive?.reviews.length || 0,
+      responseRate,
+    };
+  }, [filteredReviews, groupedByStudent]);
+
   const handleStartReply = (review) => {
     setEditingReviewId(review._id);
     setReplyForm({
@@ -559,7 +595,38 @@ const AdminReviewPage = () => {
               <p className="text-sm text-slate-500 mt-2">Try adjusting your filters or analysis mode.</p>
             </div>
           ) : viewMode === 'analysis' ? (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-6">
+              <div className="rounded-[2rem] border border-indigo-100 bg-indigo-50/40 p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+                    <IconBuilding />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-indigo-950 tracking-tight">Company Profile Analysis</h3>
+                    <p className="text-xs font-bold uppercase tracking-widest text-indigo-400">Portfolio-level company insights</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="rounded-2xl border border-indigo-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Profiles</p>
+                    <p className="mt-1 text-2xl font-black text-indigo-900">{companyProfileAnalysis.profiles}</p>
+                  </div>
+                  <div className="rounded-2xl border border-indigo-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg Profile Score</p>
+                    <p className="mt-1 text-2xl font-black text-indigo-900">{companyProfileAnalysis.avgProfileRating}</p>
+                  </div>
+                  <div className="rounded-2xl border border-indigo-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Most Active Profile</p>
+                    <p className="mt-1 text-sm font-black text-slate-800 truncate">{companyProfileAnalysis.mostActiveName}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{companyProfileAnalysis.mostActiveCount} reviews</p>
+                  </div>
+                  <div className="rounded-2xl border border-indigo-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Reply Coverage</p>
+                    <p className="mt-1 text-2xl font-black text-emerald-600">{companyProfileAnalysis.responseRate}%</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
               {groupedByCompany.map((company) => (
                 <div key={company.name} className="group overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all hover:shadow-2xl hover:shadow-indigo-50/50">
                   <div className="p-8">
@@ -638,9 +705,41 @@ const AdminReviewPage = () => {
                   )}
                 </div>
               ))}
+              </div>
             </div>
           ) : viewMode === 'student-analysis' ? (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-6">
+              <div className="rounded-[2rem] border border-emerald-100 bg-emerald-50/40 p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                    <IconUser />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-emerald-900 tracking-tight">Student Profile Analysis</h3>
+                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-500">Portfolio-level student insights</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Profiles</p>
+                    <p className="mt-1 text-2xl font-black text-emerald-800">{studentProfileAnalysis.profiles}</p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg Profile Score</p>
+                    <p className="mt-1 text-2xl font-black text-emerald-800">{studentProfileAnalysis.avgProfileRating}</p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Most Active Profile</p>
+                    <p className="mt-1 text-sm font-black text-slate-800 truncate">{studentProfileAnalysis.mostActiveName}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{studentProfileAnalysis.mostActiveCount} reviews</p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Reply Coverage</p>
+                    <p className="mt-1 text-2xl font-black text-emerald-600">{studentProfileAnalysis.responseRate}%</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
               {groupedByStudent.map((student) => (
                 <div key={student.name} className="group overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all hover:shadow-2xl hover:shadow-emerald-50/50">
                   <div className="p-8">
@@ -719,6 +818,7 @@ const AdminReviewPage = () => {
                   )}
                 </div>
               ))}
+              </div>
             </div>
           ) : (
             filteredReviews.map((review) => {
