@@ -22,6 +22,7 @@ const companySchema = new mongoose.Schema({
   industry: String,
   companySize: String,
   description: String,
+  logo: String,
 }, { timestamps: true });
 
 companySchema.pre('save', async function() {

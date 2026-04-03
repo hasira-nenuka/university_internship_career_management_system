@@ -32,10 +32,18 @@ const C_ApplicationManagement = ({ internships }) => {
 
     const handleStatusUpdate = async (applicationId, status) => {
         try {
+            setError('');
             await updateApplicationStatus(applicationId, status);
-            fetchApplications();
+            await fetchApplications();
+
+            setSelectedApplication((current) => {
+                if (!current || current._id !== applicationId) return current;
+                return { ...current, status };
+            });
         } catch (err) {
-            alert('Failed to update application status');
+            const message = err?.message || 'Failed to update application status';
+            setError(message);
+            alert(message);
         }
     };
 
@@ -122,6 +130,9 @@ const C_ApplicationManagement = ({ internships }) => {
                                             <h4 className="text-lg font-semibold">{app.student?.name || 'Student'}</h4>
                                             <p className="text-gray-600">{app.student?.email || 'No email'}</p>
                                             <p className="text-sm text-gray-500">
+                                                Preferred Field: {app.student?.preferredField || 'Not provided'}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
                                                 Applied: {new Date(app.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
@@ -157,7 +168,7 @@ const C_ApplicationManagement = ({ internships }) => {
                                         <option value="pending">Pending</option>
                                         <option value="reviewed">Reviewed</option>
                                         <option value="shortlisted">Shortlisted</option>
-                                        <option value="accepted">Accepted</option>
+                                        <option value="accepted">Hired</option>
                                         <option value="rejected">Rejected</option>
                                     </select>
                                 </div>
@@ -196,7 +207,16 @@ const C_ApplicationManagement = ({ internships }) => {
                                 <p><strong>Name:</strong> {selectedApplication.student?.name}</p>
                                 <p><strong>Email:</strong> {selectedApplication.student?.email}</p>
                                 <p><strong>University:</strong> {selectedApplication.student?.university}</p>
-                                <p><strong>Course:</strong> {selectedApplication.student?.course}</p>
+                                <p><strong>Degree:</strong> {selectedApplication.student?.degree || 'Not provided'}</p>
+                                <p><strong>Education Level:</strong> {selectedApplication.student?.eduLevel || 'Not provided'}</p>
+                                <p><strong>Preferred Field:</strong> {selectedApplication.student?.preferredField || 'Not provided'}</p>
+                                <p><strong>Contact Number:</strong> {selectedApplication.student?.contactNumber || 'Not provided'}</p>
+                                <p><strong>District:</strong> {selectedApplication.student?.district || 'Not provided'}</p>
+                                <p><strong>Province:</strong> {selectedApplication.student?.province || 'Not provided'}</p>
+                                <p><strong>Frontend Skills:</strong> {selectedApplication.student?.frontendSkills?.join(', ') || 'Not provided'}</p>
+                                <p><strong>Backend Skills:</strong> {selectedApplication.student?.backendSkills?.join(', ') || 'Not provided'}</p>
+                                <p><strong>Database Skills:</strong> {selectedApplication.student?.databaseSkills?.join(', ') || 'Not provided'}</p>
+                                <p><strong>Bio:</strong> {selectedApplication.student?.bio || 'Not provided'}</p>
                             </div>
                             
                             <div>
@@ -216,11 +236,11 @@ const C_ApplicationManagement = ({ internships }) => {
                                 </div>
                             </div>
                             
-                            {selectedApplication.resume && (
+                            {(selectedApplication.student?.cv || selectedApplication.resume) && (
                                 <div>
-                                    <h3 className="font-semibold text-gray-700">Resume</h3>
+                                    <h3 className="font-semibold text-gray-700">Resume / CV</h3>
                                     <a
-                                        href={selectedApplication.resume}
+                                        href={selectedApplication.student?.cv ? `http://localhost:5000/uploads/${selectedApplication.student.cv}` : selectedApplication.resume}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
@@ -241,7 +261,7 @@ const C_ApplicationManagement = ({ internships }) => {
                                     onClick={() => handleStatusUpdate(selectedApplication._id, 'accepted')}
                                     className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                                 >
-                                    Accept
+                                    Hire
                                 </button>
                                 <button
                                     onClick={() => handleStatusUpdate(selectedApplication._id, 'rejected')}

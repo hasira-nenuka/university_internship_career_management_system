@@ -13,7 +13,10 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
     const [proStatus, setProStatus] = useState(null);
 
     useEffect(() => {
-        setFormData(companyData || {});
+        setFormData((current) => ({
+            ...current,
+            ...(companyData || {})
+        }));
     }, [companyData]);
 
     useEffect(() => {
@@ -44,27 +47,24 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
 
     const handleLogoUpload = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
-        if (!['image/jpeg', 'image/jpg'].includes(file.type)) {
-            setError('Please select a valid JPEG/JPG image');
-            return;
-        }
-
-        setUploadingLogo(true);
-        setError('');
-
-        try {
-            const result = await uploadImage(file);
-            setFormData(prev => ({
-                ...prev,
-                logo: result.data.url
-            }));
-            setSuccess('Logo uploaded successfully!');
-        } catch (err) {
-            setError('Failed to upload logo. Please try again.');
-        } finally {
-            setUploadingLogo(false);
+        if (file && file.type.startsWith('image/')) {
+            setUploadingLogo(true);
+            setError('');
+            try {
+                const result = await uploadImage(file);
+                setFormData((current) => ({
+                    ...current,
+                    logo: result.data.url
+                }));
+                setSuccess('Logo uploaded successfully!');
+            } catch (err) {
+                setError('Failed to upload logo. Please try again.');
+            } finally {
+                setUploadingLogo(false);
+                e.target.value = '';
+            }
+        } else {
+            setError('Please select an image file');
         }
     };
 
@@ -75,7 +75,13 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
         setSuccess('');
 
         try {
-            await updateCompanyProfile(formData);
+            const result = await updateCompanyProfile(formData);
+            if (result?.data) {
+                setFormData((current) => ({
+                    ...current,
+                    ...result.data
+                }));
+            }
             setSuccess('Company profile updated successfully!');
             setIsEditing(false);
             if (onUpdate) onUpdate(formData);
@@ -200,7 +206,7 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                                             </div>
                                             <input
                                                 type="file"
-                                                accept="image/jpeg,image/jpg"
+                                                accept="image/jpeg,image/jpg,image/png,image/webp"
                                                 onChange={handleLogoUpload}
                                                 className="hidden"
                                                 disabled={uploadingLogo}
@@ -212,7 +218,7 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                                 {isEditing && (
                                     <div>
                                         <p className="text-sm text-gray-500 dark:text-slate-400">Upload Company Logo</p>
-                                        <p className="text-xs text-gray-400">JPEG or JPG only • Max 5MB recommended</p>
+                                        <p className="text-xs text-gray-400">PNG, JPG, SVG, and WebP are supported • Max 5MB recommended</p>
                                         {uploadingLogo && <p className="text-indigo-600 text-sm mt-2">Uploading logo...</p>}
                                     </div>
                                 )}
@@ -220,62 +226,137 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
 
                             {/* Company Information */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {[
-                                    { label: "Company Name", name: "companyName", type: "text" },
-                                    { label: "Email", name: "email", type: "email" },
-                                    { label: "Phone", name: "phone", type: "tel" },
-                                    { label: "Industry", name: "industry", type: "text" },
-                                    { label: "Company Size", name: "companySize", type: "select" },
-                                    { label: "Website", name: "website", type: "url" },
-                                ].map((field) => (
-                                    <div key={field.name}>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
-                                            {field.label}
-                                        </label>
-                                        {isEditing ? (
-                                            field.type === "select" ? (
-                                                <select
-                                                    name={field.name}
-                                                    value={formData[field.name] || ''}
-                                                    onChange={handleChange}
-                                                    className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                                >
-                                                    <option value="1-10">1-10 employees</option>
-                                                    <option value="11-50">11-50 employees</option>
-                                                    <option value="51-200">51-200 employees</option>
-                                                    <option value="201-500">201-500 employees</option>
-                                                    <option value="500+">500+ employees</option>
-                                                </select>
-                                            ) : (
-                                                <input
-                                                    type={field.type}
-                                                    name={field.name}
-                                                    value={formData[field.name] || ''}
-                                                    onChange={handleChange}
-                                                    className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                                />
-                                            )
-                                        ) : (
-                                            <p className="text-lg text-gray-900 dark:text-white py-3">
-                                                {field.name === 'website' && formData.website ? (
-                                                    <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
-                                                        {formData.website}
-                                                    </a>
-                                                ) : field.name === 'companySize' ? (
-                                                    `${formData.companySize} employees`
-                                                ) : (
-                                                    formData[field.name] || '—'
-                                                )}
-                                            </p>
-                                        )}
-                                    </div>
-                                ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Company Name
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            name="companyName"
+                                            value={formData.companyName || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    ) : (
+                                        <p className="text-lg text-gray-900 dark:text-white py-3">
+                                            {formData.companyName || '—'}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Email
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    ) : (
+                                        <p className="text-lg text-gray-900 dark:text-white py-3">
+                                            {formData.email || '—'}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Phone
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={formData.phone || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    ) : (
+                                        <p className="text-lg text-gray-900 dark:text-white py-3">
+                                            {formData.phone || '—'}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Industry
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            name="industry"
+                                            value={formData.industry || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    ) : (
+                                        <p className="text-lg text-gray-900 dark:text-white py-3">
+                                            {formData.industry || '—'}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Company Size
+                                    </label>
+                                    {isEditing ? (
+                                        <select
+                                            name="companySize"
+                                            value={formData.companySize || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        >
+                                            <option value="">Select size</option>
+                                            <option value="1-10">1-10 employees</option>
+                                            <option value="11-50">11-50 employees</option>
+                                            <option value="51-200">51-200 employees</option>
+                                            <option value="201-500">201-500 employees</option>
+                                            <option value="500+">500+ employees</option>
+                                        </select>
+                                    ) : (
+                                        <p className="text-lg text-gray-900 dark:text-white py-3">
+                                            {formData.companySize ? `${formData.companySize} employees` : '—'}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Website
+                                    </label>
+                                    {isEditing ? (
+                                        <input
+                                            type="url"
+                                            name="website"
+                                            value={formData.website || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3 border border-gray-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    ) : (
+                                        <p className="text-lg text-gray-900 dark:text-white py-3">
+                                            {formData.website ? (
+                                                <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                                                    {formData.website}
+                                                </a>
+                                            ) : '—'}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Address & Description */}
                             <div className="space-y-8">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">Address</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Address
+                                    </label>
                                     {isEditing ? (
                                         <textarea
                                             name="address"
@@ -285,12 +366,16 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                                             className="w-full px-5 py-4 border border-gray-300 dark:border-slate-700 rounded-3xl bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500 resize-y"
                                         />
                                     ) : (
-                                        <p className="text-gray-700 dark:text-slate-300 leading-relaxed">{formData.address || '—'}</p>
+                                        <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
+                                            {formData.address || '—'}
+                                        </p>
                                     )}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">Company Description</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-2">
+                                        Company Description
+                                    </label>
                                     {isEditing ? (
                                         <textarea
                                             name="description"
@@ -307,25 +392,32 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
+                            {/* Pro Status Message */}
+                            {proStatus?.status === 'active' && (
+                                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
+                                    Successfully added Pro Account. Congratulations!
+                                </div>
+                            )}
+
+                            {/* Form Actions */}
                             {isEditing && (
-                                <div className="flex gap-4 pt-6 border-t dark:border-slate-800">
+                                <div className="flex space-x-3 pt-4">
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="flex-1 md:flex-none px-10 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-2xl transition-all shadow-lg"
+                                        className="px-6 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all font-medium"
                                     >
-                                        {loading ? 'Saving Changes...' : 'Save Changes'}
+                                        {loading ? 'Saving...' : 'Save Changes'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setIsEditing(false);
-                                            setFormData(companyData || {});
+                                            setFormData(companyData);
                                             setError('');
                                             setSuccess('');
                                         }}
-                                        className="flex-1 md:flex-none px-10 py-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 font-semibold rounded-2xl transition-all"
+                                        className="px-6 py-3 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-2xl hover:bg-gray-300 dark:hover:bg-slate-600 transition-all font-medium"
                                     >
                                         Cancel
                                     </button>

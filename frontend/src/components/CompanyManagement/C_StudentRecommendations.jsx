@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCompanyProAccount, getStudentRecommendations, searchStudentsDirectly } from './C_CompanyUtils';
 import MatchSummary from './C_MatchSummary';
+import { resolveUploadUrl } from '../StudentManagement/uploadUrl';
 
 const JOB_CATEGORIES = [
     'Frontend Developer',
@@ -36,6 +37,19 @@ const DISTRICTS = [
     'Ratnapura', 'Kegalle'
 ];
 
+const SHORTLIST_STORAGE_KEY = 'companyShortlistedStudents';
+
+const getFileExtension = (value) => {
+    if (!value || typeof value !== 'string') return '';
+    const cleanValue = value.split('?')[0].split('#')[0];
+    const parts = cleanValue.split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase() : '';
+};
+
+const isImageFile = (value) => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(getFileExtension(value));
+
+const isPdfFile = (value) => getFileExtension(value) === 'pdf';
+
 const C_StudentRecommendations = ({ internships }) => {
     const navigate = useNavigate();
     const [selectedInternship, setSelectedInternship] = useState('');
@@ -48,8 +62,22 @@ const C_StudentRecommendations = ({ internships }) => {
     const [directResults, setDirectResults] = useState([]);
     const [directLoading, setDirectLoading] = useState(false);
     const [directError, setDirectError] = useState('');
+    const [shortlistedStudents, setShortlistedStudents] = useState([]);
 
     const isProActive = Boolean(proStatus?.isProActive);
+
+    useEffect(() => {
+        try {
+            const savedShortlist = JSON.parse(localStorage.getItem(SHORTLIST_STORAGE_KEY) || '[]');
+            setShortlistedStudents(Array.isArray(savedShortlist) ? savedShortlist : []);
+        } catch {
+            setShortlistedStudents([]);
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem(SHORTLIST_STORAGE_KEY, JSON.stringify(shortlistedStudents));
+    }, [shortlistedStudents]);
 
     useEffect(() => {
         const fetchProStatus = async () => {
@@ -106,6 +134,23 @@ const C_StudentRecommendations = ({ internships }) => {
         }
     };
 
+    const toggleShortlist = (student) => {
+        setShortlistedStudents((current) => {
+            const exists = current.some((item) => item._id === student._id);
+            if (exists) {
+                return current.filter((item) => item._id !== student._id);
+            }
+
+            return [...current, student];
+        });
+    };
+
+    const isShortlisted = (studentId) => shortlistedStudents.some((student) => student._id === studentId);
+
+    const removeFromShortlist = (studentId) => {
+        setShortlistedStudents((current) => current.filter((student) => student._id !== studentId));
+    };
+
     const getScoreColor = (score) => {
         if (score >= 80) return 'text-green-600';
         if (score >= 60) return 'text-yellow-600';
@@ -116,6 +161,37 @@ const C_StudentRecommendations = ({ internships }) => {
         if (score >= 80) return 'bg-green-100';
         if (score >= 60) return 'bg-yellow-100';
         return 'bg-red-100';
+    };
+
+    const getRecommendationReasons = (student) => {
+        const apiReasons = student.recommendationDetails?.reasons;
+        if (Array.isArray(apiReasons) && apiReasons.length > 0) {
+            return apiReasons;
+        }
+
+        const reasons = [];
+        if (student.district) reasons.push(`District: ${student.district}`);
+        if (student.province) reasons.push(`Province: ${student.province}`);
+        if (student.preferredField) reasons.push(`Preferred field: ${student.preferredField}`);
+
+        const topSkills = [
+            ...(student.frontendSkills || []),
+            ...(student.backendSkills || []),
+            ...(student.databaseSkills || [])
+        ].slice(0, 4);
+
+        if (topSkills.length > 0) {
+            reasons.push(`Skills: ${topSkills.join(', ')}`);
+        }
+
+        return reasons.length > 0 ? reasons : ['Profile available for review'];
+    };
+
+    const getCvDisplayType = (cvValue) => {
+        if (!cvValue) return 'none';
+        if (isImageFile(cvValue)) return 'image';
+        if (isPdfFile(cvValue)) return 'pdf';
+        return 'file';
     };
 
     return (
@@ -184,25 +260,132 @@ const C_StudentRecommendations = ({ internships }) => {
                         )}
 
                         {directResults.length > 0 && (
-                            <div className="mt-4 space-y-3">
-                                {directResults.map((student) => (
-                                    <div key={student.id} className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-gray-50 dark:bg-slate-700/40">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900 dark:text-white">
-                                                    {student.firstName} {student.lastName}
-                                                </h4>
-                                                <p className="text-sm text-gray-600 dark:text-slate-300">{student.email}</p>
-                                                <p className="text-sm text-gray-600 dark:text-slate-300">{student.contactNumber}</p>
-                                                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">District: {student.district || 'N/A'}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-lg font-bold text-emerald-600">{Math.round(student.matchScore)}%</div>
-                                                <div className="text-xs text-gray-500">Match</div>
+                            <div className="mt-6 grid gap-4 xl:grid-cols-2">
+                                {directResults.map((student) => {
+                                    const shortlisted = isShortlisted(student._id);
+                                    const cvType = getCvDisplayType(student.cv);
+                                    const cvUrl = student.cv ? resolveUploadUrl(student.cv) : '';
+                                    const reasons = getRecommendationReasons(student);
+
+                                    return (
+                                        <div key={student._id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-slate-700 dark:bg-slate-800/80">
+                                            <div className="flex flex-col gap-5 p-5 md:flex-row md:items-start">
+                                                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-900">
+                                                    {student.profileImage ? (
+                                                        <img
+                                                            src={resolveUploadUrl(student.profileImage)}
+                                                            alt={`${student.firstName} ${student.lastName}`}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-xl font-bold text-slate-500 dark:text-slate-400">
+                                                            {student.firstName?.[0] || 'S'}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                                        <div>
+                                                            <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                                                                {student.firstName} {student.lastName}
+                                                            </h4>
+                                                            <p className="text-sm text-gray-600 dark:text-slate-300">{student.email}</p>
+                                                            <p className="text-sm text-gray-600 dark:text-slate-300">{student.contactNumber || 'No contact number'}</p>
+                                                        </div>
+                                                        <div className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                                            {Math.round(student.matchScore || 0)}% Match
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4 grid gap-2 text-sm text-slate-700 dark:text-slate-200 sm:grid-cols-2">
+                                                        <p><b>Province:</b> {student.province || 'N/A'}</p>
+                                                        <p><b>District:</b> {student.district || 'N/A'}</p>
+                                                        <p><b>Level:</b> {student.eduLevel || 'N/A'}</p>
+                                                        <p><b>Preferred:</b> {student.preferredField || 'N/A'}</p>
+                                                    </div>
+
+                                                    <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/80 p-4 dark:border-cyan-400/10 dark:bg-cyan-400/5">
+                                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-cyan-300">Recommendation Details</p>
+                                                        <ul className="mt-2 space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                                                            {reasons.map((reason, index) => (
+                                                                <li key={index}>• {reason}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+
+                                                    <div className="mt-4 flex flex-wrap gap-2">
+                                                        {(student.frontendSkills || []).slice(0, 3).map((skill) => (
+                                                            <span key={`f-${skill}`} className="rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                        {(student.backendSkills || []).slice(0, 3).map((skill) => (
+                                                            <span key={`b-${skill}`} className="rounded-full bg-violet-100 px-2 py-1 text-xs font-medium text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                        {(student.databaseSkills || []).slice(0, 3).map((skill) => (
+                                                            <span key={`d-${skill}`} className="rounded-full bg-cyan-100 px-2 py-1 text-xs font-medium text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300">
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    {student.cv && (
+                                                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+                                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-400">Uploaded CV</p>
+                                                            <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950">
+                                                                {cvType === 'image' ? (
+                                                                    <img src={cvUrl} alt="Student CV" className="max-h-56 w-full object-contain" />
+                                                                ) : cvType === 'pdf' ? (
+                                                                    <iframe title="Student CV preview" src={cvUrl} className="h-56 w-full" />
+                                                                ) : (
+                                                                    <div className="flex h-56 flex-col items-center justify-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                                                        <p>CV file uploaded</p>
+                                                                        <p className="break-all px-4 text-center">{student.cv}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="mt-3 flex flex-wrap gap-3">
+                                                                <a
+                                                                    href={cvUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-950 dark:hover:bg-white"
+                                                                >
+                                                                    Open CV
+                                                                </a>
+                                                                <a
+                                                                    href={cvUrl}
+                                                                    download
+                                                                    className="rounded-xl border border-cyan-500 px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50 dark:border-cyan-400 dark:text-cyan-300 dark:hover:bg-cyan-400/10"
+                                                                >
+                                                                    Download CV
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mt-5 flex flex-wrap gap-3">
+                                                        <button
+                                                            onClick={() => toggleShortlist(student)}
+                                                            className={`rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] ${shortlisted ? 'bg-slate-700 hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-950' : 'bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700'}`}
+                                                        >
+                                                            {shortlisted ? 'Remove from Shortlist' : 'Shortlist Student'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => window.open(`/company/student-profile/${student._id}`, '_blank')}
+                                                            className="rounded-xl border border-indigo-500 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-cyan-400 dark:text-cyan-300 dark:hover:bg-cyan-400/10"
+                                                        >
+                                                            View Profile
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -212,6 +395,66 @@ const C_StudentRecommendations = ({ internships }) => {
                     </div>
                 )}
             </div>
+
+            {shortlistedStudents.length > 0 && (
+                <div className="rounded-2xl border border-cyan-200 bg-cyan-50/90 p-6 shadow-sm dark:border-cyan-800/40 dark:bg-slate-800/90">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold text-cyan-900 dark:text-cyan-300">Shortlisted Students</h3>
+                            <p className="text-sm text-cyan-800 dark:text-cyan-400">
+                                Students saved from direct search are kept here for quick review.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShortlistedStudents([])}
+                            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-950 dark:hover:bg-white"
+                        >
+                            Clear Shortlist
+                        </button>
+                    </div>
+
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {shortlistedStudents.map((student) => (
+                            <div key={student._id} className="rounded-2xl border border-white bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={student.profileImage ? resolveUploadUrl(student.profileImage) : '/placeholder-profile.png'}
+                                        alt={`${student.firstName} ${student.lastName}`}
+                                        className="h-12 w-12 rounded-xl object-cover"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="truncate font-semibold text-slate-900 dark:text-white">
+                                            {student.firstName} {student.lastName}
+                                        </h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{student.preferredField || 'No preferred field'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-300">
+                                    <p><b>District:</b> {student.district || 'N/A'}</p>
+                                    <p><b>Level:</b> {student.eduLevel || 'N/A'}</p>
+                                    <p><b>CV:</b> {student.cv ? getCvDisplayType(student.cv).toUpperCase() : 'Not uploaded'}</p>
+                                </div>
+
+                                <div className="mt-4 flex gap-3">
+                                    <button
+                                        onClick={() => removeFromShortlist(student._id)}
+                                        className="rounded-lg border border-red-300 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950/30"
+                                    >
+                                        Remove
+                                    </button>
+                                    <button
+                                        onClick={() => window.open(`/company/student-profile/${student._id}`, '_blank')}
+                                        className="rounded-lg border border-cyan-300 px-3 py-2 text-xs font-semibold text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-950/30"
+                                    >
+                                        View Profile
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Internship Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-lg p-6 border dark:border-slate-700">

@@ -339,7 +339,8 @@ exports.getAllPayments = async (req, res) => {
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { paymentId } = req.params;
-    const { status } = req.body;
+    const status = normalizeText(req.body.status);
+    const rejectionReason = normalizeText(req.body.rejectionReason);
 
     if (!mongoose.Types.ObjectId.isValid(paymentId)) {
       return res.status(400).json({ success: false, message: "Invalid paymentId" });
@@ -349,9 +350,22 @@ exports.updatePaymentStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid payment status" });
     }
 
+    if (status === "rejected" && !rejectionReason) {
+      return res.status(400).json({
+        success: false,
+        message: "Rejection reason is required when rejecting a payment"
+      });
+    }
+
+    const updatePayload = {
+      status,
+      rejectionReason: status === "rejected" ? rejectionReason : "",
+      rejectionNotifiedAt: status === "rejected" ? new Date() : null
+    };
+
     const payment = await Payment.findByIdAndUpdate(
       paymentId,
-      { status },
+      updatePayload,
       { new: true, runValidators: true }
     );
 

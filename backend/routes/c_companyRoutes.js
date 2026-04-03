@@ -6,7 +6,8 @@ const {
     loginCompany,
     getCompanyProfile,
     updateCompanyProfile,
-    getAllCompanies
+    getAllCompanies,
+    searchStudents
 } = require('../controllers/c_companyController');
 
 const { protectCompany } = require('../middleware/C_authMiddleware');
@@ -14,6 +15,7 @@ const { protectCompany } = require('../middleware/C_authMiddleware');
 router.post('/register', registerCompany);
 router.post('/login', loginCompany);
 router.get('/', protectCompany, getAllCompanies);
+router.get('/:companyId/search-students', protectCompany, searchStudents);
 router.get('/:id', protectCompany, getCompanyProfile);
 router.put('/:id', protectCompany, updateCompanyProfile);
 

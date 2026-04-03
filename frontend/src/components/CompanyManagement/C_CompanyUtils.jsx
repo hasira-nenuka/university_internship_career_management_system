@@ -19,9 +19,64 @@ const normalizeCompanyApiError = (error, fallbackMessage) => {
     return error.response?.data || { message: fallbackMessage };
 };
 
+const CATEGORY_KEYWORDS = {
+    'Frontend Developer': ['frontend', 'react', 'javascript', 'html', 'css', 'ui', 'ux'],
+    'Backend Developer': ['backend', 'node', 'python', 'java', 'php', 'api', 'server'],
+    'Full Stack Developer': ['frontend', 'backend', 'full stack', 'react', 'node'],
+    'Mobile App Developer': ['mobile', 'flutter', 'react native', 'android', 'ios'],
+    'QA Engineer': ['qa', 'tester', 'testing'],
+    'Software Tester': ['tester', 'testing', 'qa'],
+    'Automation Tester': ['automation', 'selenium', 'cypress', 'playwright'],
+    'DevOps Engineer': ['devops', 'docker', 'kubernetes', 'ci/cd', 'aws'],
+    'Cloud Engineer': ['cloud', 'aws', 'azure', 'gcp'],
+    'System Administrator': ['system admin', 'sysadmin', 'network', 'linux'],
+    'Data Analyst': ['data', 'sql', 'excel', 'power bi', 'tableau', 'analytics'],
+    'Data Scientist': ['data science', 'machine learning', 'python', 'statistics'],
+    'Machine Learning Engineer': ['machine learning', 'ai', 'python', 'tensorflow', 'pytorch'],
+    'UI/UX Designer': ['ui', 'ux', 'figma', 'design', 'prototype'],
+    'Project Manager': ['project management', 'agile', 'scrum', 'planning'],
+    'Product Manager': ['product', 'roadmap', 'strategy'],
+    'Business Analyst': ['business', 'analysis', 'requirements'],
+    'Cybersecurity Analyst': ['security', 'cyber', 'penetration', 'risk']
+};
+
+const getProfileText = (profile) => [
+    profile.preferredField,
+    ...(profile.frontendSkills || []),
+    ...(profile.backendSkills || []),
+    ...(profile.databaseSkills || []),
+    profile.degree,
+    profile.bio
+]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+const buildMatchScore = (profile, category) => {
+    const searchableText = getProfileText(profile);
+    const categoryText = String(category || '').toLowerCase();
+    const keywords = CATEGORY_KEYWORDS[category] || [categoryText];
+    const preferredHit = profile.preferredField && profile.preferredField.toLowerCase().includes(categoryText);
+    const keywordHits = keywords.filter((keyword) => searchableText.includes(keyword.toLowerCase())).length;
+
+    return Math.min(100, (preferredHit ? 60 : 0) + (searchableText.includes(categoryText) ? 20 : 0) + keywordHits * 15);
+};
+
+const normalizeToken = (token) => {
+    if (!token || typeof token !== 'string') return '';
+    const trimmed = token.trim();
+    if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return '';
+    return trimmed;
+};
+
 // Set up axios instance with token
 const getAuthHeader = () => {
-    const token = localStorage.getItem('companyToken');
+    const token = normalizeToken(localStorage.getItem('companyToken'));
+
+    if (!token) {
+        throw new Error('Company session expired. Please login again.');
+    }
+
     return {
         headers: { Authorization: `Bearer ${token}` }
     };
@@ -36,6 +91,7 @@ export const registerCompany = async (companyData) => {
             localStorage.setItem('companyToken', response.data.token);
             localStorage.setItem('companyId', company?._id || company?.id || '');
             localStorage.setItem('companyName', company?.companyName || '');
+            localStorage.setItem('companyLogo', company?.logo || '');
         }
         return response.data;
     } catch (error) {
@@ -52,6 +108,7 @@ export const loginCompany = async (email, password) => {
             localStorage.setItem('companyToken', response.data.token);
             localStorage.setItem('companyId', company?._id || company?.id || '');
             localStorage.setItem('companyName', company?.companyName || '');
+            localStorage.setItem('companyLogo', company?.logo || '');
         }
         return response.data;
     } catch (error) {
@@ -179,6 +236,7 @@ export const logoutCompany = () => {
     localStorage.removeItem('companyToken');
     localStorage.removeItem('companyId');
     localStorage.removeItem('companyName');
+    localStorage.removeItem('companyLogo');
 };
 
 // Check if Company is Logged In
@@ -224,15 +282,34 @@ export const requestProAccountUpgrade = async () => {
 // Direct Student Search (Pro Account)
 export const searchStudentsDirectly = async (category, district) => {
     try {
-        const companyId = localStorage.getItem('companyId');
-        const response = await axios.get(
-            `${API_URL}/company/${companyId}/search-students`,
-            {
-                ...getAuthHeader(),
-                params: { category, district }
-            }
-        );
-        return response.data;
+        const response = await axios.get(`${API_URL}/profiles/all`, getAuthHeader());
+        const profiles = Array.isArray(response.data) ? response.data : [];
+        const normalizedDistrict = String(district || '').trim().toLowerCase();
+
+        const matchedStudents = profiles
+            .filter((profile) => String(profile.district || '').trim().toLowerCase() === normalizedDistrict)
+            .map((profile) => ({
+                ...profile,
+                matchScore: buildMatchScore(profile, category),
+                recommendationDetails: {
+                    category,
+                    district,
+                    reasons: [
+                        profile.district ? `District matches: ${profile.district}` : 'District not listed',
+                        profile.preferredField ? `Preferred field: ${profile.preferredField}` : 'No preferred field selected',
+                        getProfileText(profile).includes(String(category || '').toLowerCase()) ? `Relevant to ${category}` : 'Matched by district and profile content'
+                    ]
+                }
+            }))
+            .filter((profile) => profile.matchScore > 0)
+            .sort((a, b) => b.matchScore - a.matchScore);
+
+        return {
+            success: true,
+            count: matchedStudents.length,
+            filters: { category, district },
+            data: matchedStudents
+        };
     } catch (error) {
         throw error.response?.data || { message: 'Failed to search students' };
     }

@@ -7,6 +7,8 @@ import StudentRecommendations from './C_StudentRecommendations';
 import CompanyProfile from './C_CompanyProfile';
 import ApplicationManagement from './C_ApplicationManagement';
 import CompanyReviews from './C_CompanyReviews';
+import JobPostBot from './C_JobPostBot';
+import DraggableBotAssistant from './C_DraggableBotAssistant';
 
 const INTERNSHIP_REFRESH_INTERVAL_MS = 10000;
 
@@ -53,7 +55,8 @@ const C_CompanyDashboard = () => {
         if (!token) {
             // UI preview mode: allow dashboard rendering without auth token.
             setCompanyData({
-                companyName: localStorage.getItem('companyName') || 'Demo Company'
+                companyName: localStorage.getItem('companyName') || 'Demo Company',
+                logo: localStorage.getItem('companyLogo') || ''
             });
             setInternships([]);
             setLoading(false);
@@ -128,34 +131,36 @@ const C_CompanyDashboard = () => {
 
     return (
         <div className="min-h-screen dark:bg-slate-900 bg-gray-50">
-            {/* Header */}
-            <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10 border-b dark:border-slate-700">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-4">
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                                StepIn Company Portal
-                            </h1>
-                            <span className="text-gray-600 dark:text-slate-400">|</span>
-                            <span className="text-gray-600 dark:text-slate-400 font-medium">{companyData?.companyName}</span>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500 dark:text-slate-400">
-                                Welcome, {companyData?.companyName}
-                            </span>
-                            <button
-                                onClick={handleLogout}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                            >
-                                Logout
-                            </button>
+            <DraggableBotAssistant onOpenJobPostBot={() => setActiveTab('ai-post')} />
+            {activeTab !== 'ai-post' && (
+                <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10 border-b dark:border-slate-700">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center space-x-4">
+                                <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                    INTERNIX Company Portal
+                                </h1>
+                                <span className="text-gray-600 dark:text-slate-400">|</span>
+                                <span className="text-gray-600 dark:text-slate-400 font-medium">{companyData?.companyName}</span>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                                <span className="text-sm text-gray-500 dark:text-slate-400">
+                                    Welcome, {companyData?.companyName}
+                                </span>
+                                <button
+                                    onClick={handleLogout}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Navigation Tabs */}
-            <div className="border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-[73px] z-10">
+            <div className={`border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 sticky ${activeTab === 'ai-post' ? 'top-0' : 'top-[73px]'} z-10`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <nav className="flex space-x-8 overflow-x-auto">
                         {[
@@ -259,6 +264,18 @@ const C_CompanyDashboard = () => {
                                         </div>
                                     </button>
                                     <button
+                                        onClick={() => setActiveTab('ai-post')}
+                                        className="w-full p-3 border-2 border-dashed border-sky-300 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-colors text-left"
+                                    >
+                                        <div className="flex items-center space-x-3">
+                                            <span className="text-2xl">🤖</span>
+                                            <div>
+                                                <div className="font-semibold text-sky-600">INTERNIX Job Post Bot</div>
+                                                <div className="text-sm text-gray-500">Generate an internship poster as an image</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button
                                         onClick={() => setActiveTab('recommendations')}
                                         className="w-full p-3 border-2 border-dashed border-purple-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-left"
                                     >
@@ -319,6 +336,22 @@ const C_CompanyDashboard = () => {
                             }
                         });
                     }} />
+                )}
+
+                {activeTab === 'ai-post' && (
+                    <div className="space-y-6">
+                        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-sky-100 text-4xl text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">
+                                🤖
+                            </div>
+                            <h2 className="mt-4 text-3xl font-bold text-gray-900 dark:text-white">INTERNIX Job Post Bot</h2>
+                            <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">
+                                Generate a clean internship poster image, then download or upload it for your job post.
+                            </p>
+                        </div>
+
+                        <JobPostBot />
+                    </div>
                 )}
 
                 {activeTab === 'internships' && (

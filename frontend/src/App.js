@@ -4,6 +4,7 @@ import Home from './components/HomePage/Home';
 import CompanyRegister from './components/CompanyManagement/C_CompanyRegister';
 import CompanyLogin from './components/CompanyManagement/C_CompanyLogin';
 import CompanyDashboard from './components/CompanyManagement/C_CompanyDashboard';
+import CompanyStudentProfileView from './components/CompanyManagement/C_StudentProfileView';
 import PaymentUpload from './components/PaymentManagement/p_PaymentUpload';
 import PaymentSummary from './components/PaymentManagement/p_PaymentSummary';
 import PaymentSuccess from './components/PaymentManagement/p_PaymentSuccess';
@@ -51,6 +52,7 @@ function App() {
           <Route path="/register/company" element={<CompanyRegister />} />
           <Route path="/login/company" element={<CompanyLogin />} />
           <Route path="/company/dashboard" element={<CompanyDashboard />} />
+          <Route path="/company/student-profile/:id" element={<CompanyStudentProfileView />} />
 
           {/* Payment Routes */}
           <Route path="/payments/upload" element={<PaymentUpload />} />
