@@ -52,8 +52,9 @@ const AdminReviewPage = () => {
   // Advanced State: AI, Reports, and View Mode
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [viewMode, setViewMode] = useState('feed'); // 'feed' | 'analysis'
+  const [viewMode, setViewMode] = useState('feed'); // 'feed' | 'analysis' | 'student-analysis'
   const [expandedCompany, setExpandedCompany] = useState(null);
+  const [expandedStudent, setExpandedStudent] = useState(null);
 
   useEffect(() => {
     const loadReviews = async () => {
@@ -180,7 +181,7 @@ const AdminReviewPage = () => {
       reviews.filter((review) => {
         const matchesSearch =
           !searchTerm ||
-          [review.companyName, review.title, review.comment, review.adminReply]
+          [review.companyName, review.studentName, review.title, review.comment, review.adminReply]
             .join(' ')
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
@@ -194,15 +195,18 @@ const AdminReviewPage = () => {
 
   const groupedByCompany = useMemo(() => {
     const groups = {};
-    filteredReviews.forEach(review => {
-      if (!groups[review.companyName]) {
-        groups[review.companyName] = {
-          name: review.companyName,
+    filteredReviews
+      .filter((review) => review.reviewerType !== 'Student')
+      .forEach(review => {
+      const companyName = review.companyName || 'Unknown Company';
+      if (!groups[companyName]) {
+        groups[companyName] = {
+          name: companyName,
           reviews: [],
           avgRating: 0
         };
       }
-      groups[review.companyName].reviews.push(review);
+      groups[companyName].reviews.push(review);
     });
 
     return Object.values(groups).map(g => {
@@ -210,6 +214,29 @@ const AdminReviewPage = () => {
       const sortedReviews = [...g.reviews].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
       return { ...g, avgRating, reviews: sortedReviews };
     }).sort((a,b) => b.reviews.length - a.reviews.length);
+  }, [filteredReviews]);
+
+  const groupedByStudent = useMemo(() => {
+    const groups = {};
+    filteredReviews
+      .filter((review) => review.reviewerType === 'Student')
+      .forEach((review) => {
+        const studentName = review.studentName || 'Unknown Student';
+        if (!groups[studentName]) {
+          groups[studentName] = {
+            name: studentName,
+            reviews: [],
+            avgRating: 0
+          };
+        }
+        groups[studentName].reviews.push(review);
+      });
+
+    return Object.values(groups).map((g) => {
+      const avgRating = (g.reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / g.reviews.length).toFixed(1);
+      const sortedReviews = [...g.reviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return { ...g, avgRating, reviews: sortedReviews };
+    }).sort((a, b) => b.reviews.length - a.reviews.length);
   }, [filteredReviews]);
 
   const handleStartReply = (review) => {
@@ -356,10 +383,15 @@ const AdminReviewPage = () => {
              {[
                { id: 'feed', label: 'Detailed Stream', icon: IconMessage },
                { id: 'analysis', label: 'Company Profiles', icon: IconBuilding },
+               { id: 'student-analysis', label: 'Student Profiles', icon: IconUser },
              ].map((mode) => (
                <button
                  key={mode.id}
-                 onClick={() => { setViewMode(mode.id); setExpandedCompany(null); }}
+                 onClick={() => {
+                   setViewMode(mode.id);
+                   setExpandedCompany(null);
+                   setExpandedStudent(null);
+                 }}
                  className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
                    viewMode === mode.id
                      ? 'bg-white text-indigo-900 shadow-md shadow-indigo-100'
@@ -379,7 +411,7 @@ const AdminReviewPage = () => {
               type="text"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Filter by company, keyword, or context..."
+              placeholder="Filter by company, student, keyword, or context..."
               className="w-full rounded-[1.5rem] border-transparent bg-slate-50 px-14 py-4 text-sm outline-none transition-all focus:bg-white focus:ring-4 focus:ring-indigo-50 font-medium"
             />
           </div>
@@ -607,6 +639,87 @@ const AdminReviewPage = () => {
                 </div>
               ))}
             </div>
+          ) : viewMode === 'student-analysis' ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {groupedByStudent.map((student) => (
+                <div key={student.name} className="group overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all hover:shadow-2xl hover:shadow-emerald-50/50">
+                  <div className="p-8">
+                    <div className="flex items-center justify-between mb-8">
+                      <div className="flex items-center gap-4">
+                        <div className="h-14 w-14 rounded-2xl bg-emerald-600 border-4 border-emerald-50 flex items-center justify-center text-white text-2xl shadow-xl shadow-emerald-100 group-hover:rotate-6 transition-all">
+                          <IconUser />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black text-slate-900 tracking-tight">{student.name}</h3>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{student.reviews.length} Global Evaluations</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-1">Avg Score</p>
+                        <div className="flex items-center gap-2 text-2xl font-black text-indigo-950">
+                           <IconStar className="fill-amber-400 text-amber-400 text-xl" />
+                           {student.avgRating}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setExpandedStudent(expandedStudent === student.name ? null : student.name)}
+                      className={`w-full rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-all ${
+                        expandedStudent === student.name
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white shadow-sm'
+                      }`}
+                    >
+                      {expandedStudent === student.name ? 'Collapse Portfolio' : 'One-by-One History View'}
+                    </button>
+                  </div>
+
+                  {expandedStudent === student.name && (
+                    <div className="bg-slate-50/50 border-t border-slate-100 p-8 space-y-8 animate-in slide-in-from-top-4 duration-500">
+                      <div className="relative pl-8 space-y-12 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-emerald-100">
+                        {student.reviews.map((rev, idx) => (
+                           <div key={rev._id} className="relative group/item">
+                              <div className="absolute -left-[2.25rem] top-1.5 h-4 w-4 rounded-full border-4 border-white bg-emerald-600 shadow-sm z-10"></div>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-black uppercase tracking-tighter text-emerald-500">
+                                  {idx === 0 ? 'Latest Interaction' : `Point ${student.reviews.length - idx}`}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-400">
+                                  {new Date(rev.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                </span>
+                              </div>
+                              <h4 className="text-lg font-black text-slate-900 tracking-tight mb-3">{rev.title}</h4>
+                              <p className="text-sm font-medium text-slate-600 leading-relaxed italic border-l-4 border-emerald-50 pl-5">
+                                "{parseReviewDetails(rev.comment).cleanComment}"
+                              </p>
+                              <div className="mt-4 flex items-center gap-3">
+                                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-100 text-[10px] font-black text-amber-600 uppercase">
+                                    <IconStar className="fill-amber-400" />
+                                    {rev.rating}.0
+                                 </div>
+                                 <span className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${statusTone[rev.status] || 'bg-slate-100'}`}>
+                                    {rev.status}
+                                 </span>
+                              </div>
+
+                              {rev.adminReply && (
+                                <div className="mt-5 p-5 rounded-2xl bg-emerald-700 text-white shadow-xl shadow-emerald-100/50 animate-in fade-in zoom-in-95">
+                                   <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-emerald-200 mb-2">
+                                      <IconCheck className="text-sm" />
+                                      Official Response
+                                   </div>
+                                   <p className="text-xs leading-relaxed font-medium">"{rev.adminReply}"</p>
+                                </div>
+                              )}
+                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           ) : (
             filteredReviews.map((review) => {
               const { cleanComment, details } = parseReviewDetails(review.comment);
@@ -695,16 +808,16 @@ const AdminReviewPage = () => {
                   </div>
 
                   {review.adminReply && editingReviewId !== review._id && (
-                    <div className="mt-8 relative overflow-hidden rounded-[2rem] bg-indigo-900 p-8 text-white">
-                      <div className="absolute right-0 top-0 p-8 opacity-10">
-                        <IconCheck className="text-8xl" />
+                    <div className="mt-8 relative overflow-hidden rounded-[2rem] border border-indigo-100 bg-indigo-50/60 p-6 text-slate-700">
+                      <div className="absolute right-0 top-0 p-4 opacity-20">
+                        <IconCheck className="text-4xl text-indigo-300" />
                       </div>
                       <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-4 text-[10px] font-black uppercase tracking-widest text-indigo-300">
+                        <div className="flex items-center gap-2 mb-3 text-[10px] font-black uppercase tracking-widest text-indigo-500">
                            <IconInfo />
                            Official Response from {review.repliedByName || 'Analysis Manager'}
                         </div>
-                        <p className="text-lg leading-relaxed font-medium">"{review.adminReply}"</p>
+                        <p className="text-base leading-relaxed font-medium text-slate-700">"{review.adminReply}"</p>
                       </div>
                     </div>
                   )}
