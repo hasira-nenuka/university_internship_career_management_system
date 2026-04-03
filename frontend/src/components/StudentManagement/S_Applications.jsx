@@ -11,7 +11,11 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { resolveUploadUrl } from "./uploadUrl";
-import { getStudentSession as getStoredStudentSession } from "./student_utils";
+import {
+  getStudentSession as getStoredStudentSession,
+  isStudentAuthError,
+  logoutStudent,
+} from "./student_utils";
 
 const APPLICATIONS_API_URL = "http://localhost:5000/api/applications";
 
@@ -92,6 +96,13 @@ function S_Applications() {
         );
         setApplications(Array.isArray(response.data?.data) ? response.data.data : []);
       } catch (err) {
+        if (isStudentAuthError(err)) {
+          logoutStudent();
+          setError("Your student session expired. Please log in again.");
+          navigate("/login/student");
+          return;
+        }
+
         setError(err.response?.data?.message || "Failed to load application status");
       } finally {
         setLoading(false);

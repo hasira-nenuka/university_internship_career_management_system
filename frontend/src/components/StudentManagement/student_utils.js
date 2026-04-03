@@ -93,6 +93,11 @@ export const getStudentSession = () => {
 
 export const isStudentLoggedIn = () => Boolean(getStudentSession()?.token);
 
+export const isStudentAuthError = (error) => {
+  const message = error?.response?.data?.message || error?.message || '';
+  return ['Token failed', 'No token', 'Student not found'].includes(message);
+};
+
 export const logoutStudent = () => {
   localStorage.removeItem(STUDENT_SESSION_KEY);
   localStorage.removeItem(LEGACY_TOKEN_KEY);
