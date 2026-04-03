@@ -235,15 +235,15 @@ function S_ApplyJobs() {
         )}
 
         {preferredField && !loading && !error && (
-          <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
-            <span className="inline-flex items-center gap-2 font-semibold">
+          <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-rose-300 bg-gradient-to-r from-rose-100 via-red-50 to-orange-100 px-4 py-3 text-sm text-rose-950 shadow-[0_14px_34px_rgba(225,29,72,0.16)] dark:border-amber-300/50 dark:bg-gradient-to-r dark:from-amber-400/20 dark:via-yellow-300/10 dark:to-orange-400/20 dark:text-amber-50 dark:shadow-[0_18px_40px_rgba(251,191,36,0.20)]">
+            <span className="inline-flex items-center gap-2 font-semibold text-rose-900 dark:text-amber-100">
               <FaBullseye />
               Preferred Field
             </span>
-            <span className="rounded-full bg-white px-3 py-1 font-semibold text-cyan-700 dark:bg-slate-900 dark:text-cyan-200">
+            <span className="rounded-full border border-rose-300 bg-white/90 px-3 py-1 font-semibold text-rose-700 shadow-sm dark:border-amber-300/40 dark:bg-slate-950/70 dark:text-amber-100">
               {preferredField}
             </span>
-            <span>
+            <span className="font-medium text-rose-800 dark:text-amber-100">
               {preferredMatches.length} matching post{preferredMatches.length === 1 ? "" : "s"} found
             </span>
           </div>
