@@ -12,7 +12,7 @@ const initialForm = {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const AdminCreateForm = ({ onCreate, saving }) => {
+const AdminCreateForm = ({ onCreate, saving, isDarkMode }) => {
   const [formData, setFormData] = useState(initialForm);
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -88,22 +88,27 @@ const AdminCreateForm = ({ onCreate, saving }) => {
   };
 
   return (
-    <div className="rounded-3xl border border-indigo-100 bg-white shadow-xl">
-      <div className="border-b border-indigo-50 p-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-indigo-600">
-          Admin Setup
-        </p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-900">
-          Create a new admin and assign role access
+    <div className={`rounded-[2.5rem] border shadow-sm backdrop-blur-sm transition-all overflow-hidden ${
+      isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/60 bg-white/40 shadow-indigo-500/5'
+    }`}>
+      <div className={`border-b p-8 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="h-2 w-2 rounded-full bg-indigo-600" />
+          <p className={`text-[10px] font-bold uppercase tracking-[0.4em] ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+            Admin Setup
+          </p>
+        </div>
+        <h2 className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+          Provision Access
         </h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Use this panel for your Admin Management module without building a separate frontend.
+        <p className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          Fill in the details below to create a new administrative profile.
         </p>
       </div>
 
-      <form noValidate onSubmit={handleSubmit} className="grid gap-5 p-6 md:grid-cols-2">
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Full name</span>
+      <form noValidate onSubmit={handleSubmit} className="grid gap-6 p-8 md:grid-cols-2">
+        <label className="block space-y-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Full name</span>
           <input
             type="text"
             name="fullName"
@@ -111,16 +116,20 @@ const AdminCreateForm = ({ onCreate, saving }) => {
             onChange={handleChange}
             required
             aria-invalid={Boolean(fieldErrors.fullName)}
-            className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            placeholder="Enter admin name"
+            className={`w-full rounded-2xl border px-5 py-3 text-sm font-medium outline-none transition-all ${
+              isDarkMode 
+                ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10' 
+                : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'
+            }`}
+            placeholder="John Doe"
           />
           {fieldErrors.fullName && (
-            <p className="mt-2 text-sm text-rose-600">{fieldErrors.fullName}</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-tight text-rose-500">{fieldErrors.fullName}</p>
           )}
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Email address</span>
+        <label className="block space-y-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Email address</span>
           <input
             type="email"
             name="email"
@@ -128,36 +137,44 @@ const AdminCreateForm = ({ onCreate, saving }) => {
             onChange={handleChange}
             required
             aria-invalid={Boolean(fieldErrors.email)}
-            className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className={`w-full rounded-2xl border px-5 py-3 text-sm font-medium outline-none transition-all ${
+              isDarkMode 
+                ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10' 
+                : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'
+            }`}
             placeholder="admin@stepin.edu"
           />
           {fieldErrors.email && (
-            <p className="mt-2 text-sm text-rose-600">{fieldErrors.email}</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-tight text-rose-500">{fieldErrors.email}</p>
           )}
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Role</span>
+        <label className="block space-y-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Permissions Role</span>
           <select
             name="role"
             value={formData.role}
             onChange={handleChange}
             aria-invalid={Boolean(fieldErrors.role)}
-            className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className={`w-full rounded-2xl border px-5 py-3 text-sm font-bold outline-none appearance-none transition-all ${
+              isDarkMode 
+                ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500' 
+                : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600'
+            }`}
           >
             {ADMIN_ROLES.map((role) => (
-              <option key={role} value={role}>
+              <option key={role} value={role} className="dark:bg-slate-900">
                 {role}
               </option>
             ))}
           </select>
           {fieldErrors.role && (
-            <p className="mt-2 text-sm text-rose-600">{fieldErrors.role}</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-tight text-rose-500">{fieldErrors.role}</p>
           )}
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Password</span>
+        <label className="block space-y-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Access Password</span>
           <input
             type="password"
             name="password"
@@ -166,50 +183,67 @@ const AdminCreateForm = ({ onCreate, saving }) => {
             required
             minLength={8}
             aria-invalid={Boolean(fieldErrors.password)}
-            className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            placeholder="Create a password"
+            className={`w-full rounded-2xl border px-5 py-3 text-sm font-medium outline-none transition-all ${
+              isDarkMode 
+                ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10' 
+                : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'
+            }`}
+            placeholder="Create secure password"
           />
           {fieldErrors.password && (
-            <p className="mt-2 text-sm text-rose-600">{fieldErrors.password}</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-tight text-rose-500">{fieldErrors.password}</p>
           )}
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Department</span>
+        <label className="block space-y-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Department</span>
           <input
             type="text"
             name="department"
             value={formData.department}
             readOnly
             disabled
-            className="w-full cursor-not-allowed rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-500 outline-none"
+            className={`w-full cursor-not-allowed rounded-2xl border px-5 py-3 text-sm font-bold ${
+              isDarkMode ? 'border-slate-800 bg-slate-900/50 text-slate-500' : 'border-slate-100 bg-slate-50 text-slate-400'
+            }`}
           />
         </label>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
+        <label className="block space-y-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Account Status</span>
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
             aria-invalid={Boolean(fieldErrors.status)}
-            className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            className={`w-full rounded-2xl border px-5 py-3 text-sm font-bold outline-none appearance-none transition-all ${
+              isDarkMode 
+                ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500' 
+                : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600'
+            }`}
           >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="Active" className="dark:bg-slate-900">Active</option>
+            <option value="Inactive" className="dark:bg-slate-900">Inactive</option>
           </select>
           {fieldErrors.status && (
-            <p className="mt-2 text-sm text-rose-600">{fieldErrors.status}</p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-tight text-rose-500">{fieldErrors.status}</p>
           )}
         </label>
 
-        <div className="flex items-end">
+        <div className="flex items-end md:col-span-2 mt-4">
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-blue-600 px-5 py-3 font-semibold text-white transition hover:from-indigo-800 hover:to-blue-700 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-400"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-indigo-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-100 dark:shadow-none hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? 'Saving Admin...' : 'Create Admin'}
+            {saving ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Validating Entry...
+              </>
+            ) : (
+              'Initialize Admin Profile'
+            )}
           </button>
         </div>
       </form>
