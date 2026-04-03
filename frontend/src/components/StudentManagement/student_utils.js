@@ -50,10 +50,38 @@ export const saveStudentSession = (token, student) => {
 
 export const getStudentSession = () => {
   const session = localStorage.getItem(STUDENT_SESSION_KEY);
-  return session ? JSON.parse(session) : null;
+
+  if (!session) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(session);
+  } catch {
+    localStorage.removeItem(STUDENT_SESSION_KEY);
+    return null;
+  }
 };
 
 export const isStudentLoggedIn = () => Boolean(getStudentSession()?.token);
+
+export const isStudentAuthError = (error) => {
+  const status = error?.response?.status;
+  const message = String(
+    error?.response?.data?.message || error?.response?.data?.error || error?.message || ''
+  ).toLowerCase();
+
+  return (
+    status === 401 ||
+    status === 403 ||
+    message.includes('unauthorized') ||
+    message.includes('forbidden') ||
+    message.includes('invalid token') ||
+    message.includes('token expired') ||
+    message.includes('jwt') ||
+    message.includes('not authenticated')
+  );
+};
 
 export const logoutStudent = () => {
     localStorage.removeItem(STUDENT_SESSION_KEY);
@@ -61,26 +89,6 @@ export const logoutStudent = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('student');
     localStorage.removeItem('studentAccount');
-};
-
-export const isStudentAuthError = (error) => {
-    const status = error?.response?.status;
-    const message = String(
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.message ||
-      ''
-    ).toLowerCase();
-
-    return (
-      status === 401 ||
-      status === 403 ||
-      message.includes('unauthorized') ||
-      message.includes('invalid token') ||
-      message.includes('token expired') ||
-      message.includes('jwt') ||
-      message.includes('not authenticated')
-    );
 };
 
 // --- Review API Section ---

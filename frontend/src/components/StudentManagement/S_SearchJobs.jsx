@@ -179,7 +179,7 @@ function S_SearchJobs() {
     };
 
     fetchAppliedInternships();
-  }, [studentId, token]);
+  }, [navigate, studentId, token]);
 
   const filteredJobs = useMemo(() => {
     return internships.filter((job) => {
