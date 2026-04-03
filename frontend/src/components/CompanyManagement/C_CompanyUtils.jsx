@@ -79,6 +79,7 @@ export const registerCompany = async (companyData) => {
             localStorage.setItem('companyToken', response.data.token);
             localStorage.setItem('companyId', company?._id || company?.id || '');
             localStorage.setItem('companyName', company?.companyName || '');
+            localStorage.setItem('companyLogo', company?.logo || '');
         }
         return response.data;
     } catch (error) {
@@ -95,6 +96,7 @@ export const loginCompany = async (email, password) => {
             localStorage.setItem('companyToken', response.data.token);
             localStorage.setItem('companyId', company?._id || company?.id || '');
             localStorage.setItem('companyName', company?.companyName || '');
+            localStorage.setItem('companyLogo', company?.logo || '');
         }
         return response.data;
     } catch (error) {
@@ -211,6 +213,7 @@ export const logoutCompany = () => {
     localStorage.removeItem('companyToken');
     localStorage.removeItem('companyId');
     localStorage.removeItem('companyName');
+    localStorage.removeItem('companyLogo');
 };
 
 // Check if Company is Logged In

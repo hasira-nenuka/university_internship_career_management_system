@@ -13,7 +13,10 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
     const [proStatus, setProStatus] = useState(null);
 
     useEffect(() => {
-        setFormData(companyData || {});
+        setFormData((current) => ({
+            ...current,
+            ...(companyData || {})
+        }));
     }, [companyData]);
 
     useEffect(() => {
@@ -45,8 +48,9 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
 
     const handleLogoUpload = async (e) => {
         const file = e.target.files[0];
-        if (file && (file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+        if (file && file.type.startsWith('image/')) {
             setUploadingLogo(true);
+            setError('');
             try {
                 const result = await uploadImage(file);
                 setFormData({
@@ -57,9 +61,10 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                 setError('Failed to upload logo');
             } finally {
                 setUploadingLogo(false);
+                e.target.value = '';
             }
         } else {
-            setError('Please select a JPEG/JPG image');
+            setError('Please select an image file');
         }
     };
 
@@ -70,7 +75,13 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
         setSuccess('');
         
         try {
-            await updateCompanyProfile(formData);
+            const result = await updateCompanyProfile(formData);
+            if (result?.data) {
+                setFormData((current) => ({
+                    ...current,
+                    ...result.data
+                }));
+            }
             setSuccess('Profile updated successfully!');
             setIsEditing(false);
             if (onUpdate) onUpdate();
@@ -154,7 +165,7 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
 
                     {/* Logo Section */}
                     <div className="flex items-center space-x-6">
-                        <div className="w-24 h-24 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                        <div className="w-24 h-24 overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold ring-4 ring-white dark:ring-slate-800 shadow-lg">
                             {formData.logo ? (
                                 <img src={formData.logo} alt="Logo" className="w-full h-full rounded-full object-cover" />
                             ) : (
@@ -164,15 +175,16 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                         {isEditing && (
                             <div>
                                 <label className="cursor-pointer px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600">
-                                    <span>Upload Logo (JPEG/JPG)</span>
+                                    <span>Upload Logo</span>
                                     <input
                                         type="file"
-                                        accept="image/jpeg,image/jpg"
+                                        accept="image/*"
                                         onChange={handleLogoUpload}
                                         className="hidden"
                                         disabled={uploadingLogo}
                                     />
                                 </label>
+                                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">PNG, JPG, SVG, and WebP are supported.</p>
                                 {uploadingLogo && <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Uploading...</p>}
                             </div>
                         )}

@@ -65,7 +65,8 @@ const registerCompany = async (req, res) => {
                 email: company.email,
                 industry: company.industry,
                 companySize: company.companySize,
-                description: company.description
+                description: company.description,
+                logo: company.logo
             }
         });
         
@@ -114,7 +115,8 @@ const loginCompany = async (req, res) => {
                 email: company.email,
                 industry: company.industry,
                 companySize: company.companySize,
-                description: company.description
+                description: company.description,
+                logo: company.logo
             }
         });
         
