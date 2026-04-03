@@ -21,6 +21,7 @@ import StudentApplyJobs from './components/StudentManagement/S_ApplyJobs';
 import StudentProfile from './components/StudentManagement/S_Profile';
 import StudentProfileView from './components/StudentManagement/S_ProfileView';
 import StudentProfileViewCompany from './components/StudentManagement/S_PviewCompany';
+import StudentReviews from './components/StudentManagement/S_StudentReviews';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 import AboutUs from './pages/AboutUs';
@@ -73,6 +74,7 @@ function App() {
           <Route path="/student/search-jobs" element={<StudentSearchJobs />} />
           <Route path="/student/applications" element={<StudentApplications />} />
           <Route path="/student/apply-jobs" element={<StudentApplyJobs />} />
+          <Route path="/student/reviews" element={<StudentReviews />} />
           <Route path="/student/profile" element={<StudentProfile />} />
           <Route path="/student/profile/view/:id" element={<StudentProfileView />} />
           <Route path="/student/profile/company-view" element={<StudentProfileViewCompany />} />

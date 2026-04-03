@@ -24,7 +24,7 @@ const C_CompanyLogin = () => {
         setError('');
         
         try {
-            const result = await loginCompany(formData.email, formData.password);
+            const result = await loginCompany(formData.email.trim(), formData.password);
             
             if (result.success) {
                 navigate('/company/dashboard');

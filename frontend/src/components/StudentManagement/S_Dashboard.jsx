@@ -7,10 +7,11 @@ import {
   FaSearch,
   FaClipboardList,
   FaChartLine,
+  FaStar,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { resolveUploadUrl } from "./uploadUrl";
-import { logoutStudent } from "./student_utils";
+import { logoutStudent, getStudentSession } from "./student_utils";
 
 const PROFILE_API_BASE_URL = "http://localhost:5000/api/profiles";
 
@@ -65,6 +66,13 @@ const dashboardCards = [
     desc: "Open your CV analysis page and view the jobs matched to your profile.",
     actionKey: "recommendations",
     btn: "View CV Analysis",
+  },
+  {
+    icon: <FaStar />,
+    title: "Post Review",
+    desc: "Share your platform experience and give feedback to administrators.",
+    actionKey: "reviews",
+    btn: "Leave Review",
   },
 ];
 
@@ -126,6 +134,7 @@ function S_Dashboard() {
     apply: () => navigate("/student/apply-jobs"),
     applications: () => navigate("/student/applications"),
     recommendations: () => navigate("/student/jobs"),
+    reviews: () => navigate("/student/reviews"),
   };
 
   useEffect(() => {

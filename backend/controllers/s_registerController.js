@@ -3,13 +3,13 @@ const StudentProfile = require("../models/s_ProfileModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+const { generateToken } = require("../middleware/C_authMiddleware");
 
 const normalizeEmail = (email) => email?.trim().toLowerCase();
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^\d{10}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8}$/;
 const isDatabaseConnected = () => mongoose.connection.readyState === 1;
-const getJwtSecret = () => process.env.JWT_SECRET || "secretKey";
 
 const sendDatabaseUnavailable = (res) =>
   res.status(503).json({
@@ -95,7 +95,7 @@ exports.loginStudent = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: "Invalid password" });
 
     // Create JWT token
-    const token = jwt.sign({ id: student._id }, getJwtSecret(), { expiresIn: "1d" });
+    const token = generateToken(student._id);
     const profile = await StudentProfile.findOne({ email: normalizedEmail });
 
     res.json({ token, student, profile });

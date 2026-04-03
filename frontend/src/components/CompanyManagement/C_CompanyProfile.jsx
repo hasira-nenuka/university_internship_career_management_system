@@ -395,7 +395,8 @@ const C_CompanyProfile = ({ companyData, onUpdate }) => {
                             {/* Pro Status Message */}
                             {proStatus?.status === 'active' && (
                                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
-                                    Successfully added Pro Account. Congratulations!
+                                    Pro Account is active. You can publish unlimited internship posts during your Pro period without per-post payment.
+                                    {proStatus?.expiresAt ? ` After ${new Date(proStatus.expiresAt).toLocaleDateString('en-IN')}, normal payment is required for each post.` : ''}
                                 </div>
                             )}
 

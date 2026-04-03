@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const BANK_ACCOUNT_NUMBERS = {
@@ -34,6 +34,44 @@ const P_PaymentUpload = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checkingProStatus, setCheckingProStatus] = useState(paymentType === "internship_post");
+  const [isProActiveForPost, setIsProActiveForPost] = useState(false);
+
+  useEffect(() => {
+    if (paymentType !== "internship_post" || !companyId) {
+      setCheckingProStatus(false);
+      setIsProActiveForPost(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const checkProStatus = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/pro-accounts/company/${companyId}`);
+        const data = await response.json();
+        const active = Boolean(data?.data?.status === "active" && data?.data?.isProActive);
+
+        if (isMounted) {
+          setIsProActiveForPost(active);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setIsProActiveForPost(false);
+        }
+      } finally {
+        if (isMounted) {
+          setCheckingProStatus(false);
+        }
+      }
+    };
+
+    checkProStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [companyId, paymentType]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -153,6 +191,49 @@ const P_PaymentUpload = () => {
       setLoading(false);
     }
   };
+
+  if (checkingProStatus) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-white dark:bg-slate-900 py-8 transition-colors duration-300">
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-slate-700 text-center">
+          <h2 className="text-2xl font-bold text-primary">Checking Pro Account Status...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentType === "internship_post" && isProActiveForPost) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-white dark:bg-slate-900 py-8 transition-colors duration-300 px-4">
+        <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-3xl border border-emerald-200 dark:border-emerald-700/40">
+          <h2 className="text-2xl font-bold text-emerald-700">Pro Account Active</h2>
+          <p className="mt-3 text-gray-700 dark:text-slate-200">
+            You can publish unlimited posts during your active Pro period. Internship payment upload is not required now.
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
+            When your Pro account expires, normal payment will be required again for new internship posts.
+          </p>
+
+          <div className="mt-6 flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/company/dashboard', { state: { activeTab: 'internships' } })}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold"
+            >
+              Go to My Internships
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/company/dashboard', { state: { activeTab: 'profile' } })}
+              className="px-6 py-3 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-semibold"
+            >
+              View Pro Status
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-white dark:bg-slate-900 py-8 transition-colors duration-300">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { setStudentSession } from "./student_utils";
+import { saveStudentSession } from "./student_utils";
 
 const PROFILE_API_BASE_URL = "http://localhost:5000/api/profiles";
 
@@ -27,10 +27,11 @@ function S_Login() {
       const res = await axios.post("http://localhost:5000/api/students/login", form);
       alert("Login Successful");
 
-      setStudentSession({
-        token: res.data.token,
-        student: res.data.student,
-      });
+      saveStudentSession(res.data.token, res.data.student);
+      
+      // Also maintain legacy keys for dashboard temporary compatibility
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("studentAccount", JSON.stringify(res.data.student));
 
       if (res.data.profile) {
         localStorage.setItem("student", JSON.stringify(res.data.profile));

@@ -327,12 +327,18 @@ const C_CompanyDashboard = () => {
                 {activeTab === 'post' && (
                     <PostInternship onSuccess={(createdInternship) => {
                         refreshInternships();
+                        if (createdInternship?.paymentVerificationStatus === 'verified') {
+                            setActiveTab('internships');
+                            return;
+                        }
+
                         navigate('/payments/upload', {
                             state: {
                                 companyId: localStorage.getItem('companyId'),
                                 companyName: companyData?.companyName || localStorage.getItem('companyName') || '',
                                 internshipId: createdInternship?._id || '',
-                                internshipTitle: createdInternship?.title || ''
+                                internshipTitle: createdInternship?.title || '',
+                                fixedAmount: Number(createdInternship?.calculatedPaymentAmount || 0)
                             }
                         });
                     }} />

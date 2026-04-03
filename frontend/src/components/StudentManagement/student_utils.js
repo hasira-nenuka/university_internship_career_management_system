@@ -2,16 +2,6 @@ import axios from 'axios';
 
 const STUDENT_API_URL = 'http://localhost:5000/api/students';
 const STUDENT_SESSION_KEY = 'stepin_student_session';
-const LEGACY_TOKEN_KEY = 'token';
-const LEGACY_ACCOUNT_KEY = 'studentAccount';
-const LEGACY_PROFILE_KEY = 'student';
-
-const normalizeToken = (token) => {
-  if (!token || typeof token !== 'string') return '';
-  const trimmed = token.trim();
-  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return '';
-  return trimmed;
-};
 
 const normalizeStudentError = (error, fallbackMessage) => {
   const message = error.response?.data?.message || error.response?.data?.error || error.message || fallbackMessage;
@@ -45,66 +35,30 @@ export const loginStudent = async (email, password) => {
       student,
     };
 
-    setStudentSession(session);
+    localStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify(session));
     return session;
   } catch (error) {
     throw normalizeStudentError(error, 'Student login failed');
   }
 };
 
-export const setStudentSession = (session) => {
-  if (!session) {
-    return;
-  }
-
-  const safeToken = normalizeToken(session.token);
-  if (!safeToken) {
-    localStorage.removeItem(STUDENT_SESSION_KEY);
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
-    return;
-  }
-
-  localStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify({ ...session, token: safeToken }));
-
-  localStorage.setItem(LEGACY_TOKEN_KEY, safeToken);
-
-  if (session.student) {
-    localStorage.setItem(LEGACY_ACCOUNT_KEY, JSON.stringify(session.student));
-  }
+export const saveStudentSession = (token, student) => {
+    const session = { token, student };
+    localStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify(session));
+    return session;
 };
 
 export const getStudentSession = () => {
   const session = localStorage.getItem(STUDENT_SESSION_KEY);
-  if (session) {
-    try {
-      const parsed = JSON.parse(session);
-      const safeToken = normalizeToken(parsed?.token);
-      if (!safeToken) {
-        localStorage.removeItem(STUDENT_SESSION_KEY);
-      } else {
-        return { ...parsed, token: safeToken };
-      }
-    } catch {
-      localStorage.removeItem(STUDENT_SESSION_KEY);
-    }
-  }
 
-  const token = normalizeToken(localStorage.getItem(LEGACY_TOKEN_KEY));
-  const studentRaw = localStorage.getItem(LEGACY_ACCOUNT_KEY);
-
-  if (!token || !studentRaw) {
+  if (!session) {
     return null;
   }
 
   try {
-    const fallbackSession = {
-      token,
-      student: JSON.parse(studentRaw),
-    };
-
-    localStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify(fallbackSession));
-    return fallbackSession;
+    return JSON.parse(session);
   } catch {
+    localStorage.removeItem(STUDENT_SESSION_KEY);
     return null;
   }
 };
@@ -112,13 +66,54 @@ export const getStudentSession = () => {
 export const isStudentLoggedIn = () => Boolean(getStudentSession()?.token);
 
 export const isStudentAuthError = (error) => {
-  const message = error?.response?.data?.message || error?.message || '';
-  return ['Token failed', 'No token', 'Student not found'].includes(message);
+  const status = error?.response?.status;
+  const message = String(
+    error?.response?.data?.message || error?.response?.data?.error || error?.message || ''
+  ).toLowerCase();
+
+  return (
+    status === 401 ||
+    status === 403 ||
+    message.includes('unauthorized') ||
+    message.includes('forbidden') ||
+    message.includes('invalid token') ||
+    message.includes('token expired') ||
+    message.includes('jwt') ||
+    message.includes('not authenticated')
+  );
 };
 
 export const logoutStudent = () => {
-  localStorage.removeItem(STUDENT_SESSION_KEY);
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
-  localStorage.removeItem(LEGACY_ACCOUNT_KEY);
-  localStorage.removeItem(LEGACY_PROFILE_KEY);
+    localStorage.removeItem(STUDENT_SESSION_KEY);
+    // Also clear legacy keys for clean state
+    localStorage.removeItem('token');
+    localStorage.removeItem('student');
+    localStorage.removeItem('studentAccount');
+};
+
+// --- Review API Section ---
+
+const getAuthHeader = () => {
+    const session = getStudentSession();
+    return {
+        headers: { Authorization: `Bearer ${session?.token || ''}` }
+    };
+};
+
+export const submitStudentReview = async (reviewData) => {
+    try {
+        const response = await axios.post('http://localhost:5000/api/reviews/student', reviewData, getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw normalizeStudentError(error, 'Failed to submit review');
+    }
+};
+
+export const getStudentReviews = async () => {
+    try {
+        const response = await axios.get('http://localhost:5000/api/reviews/student', getAuthHeader());
+        return response.data;
+    } catch (error) {
+        throw normalizeStudentError(error, 'Failed to fetch reviews');
+    }
 };

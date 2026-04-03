@@ -1,5 +1,6 @@
 const Internship = require('../models/c_internshipModel');
 const Company = require('../models/c_companyModel');
+const { ensureProAccess } = require('./p_proAccountController');
 
 // @desc    Create new internship
 // @route   POST /api/internships
@@ -7,7 +8,6 @@ const Company = require('../models/c_companyModel');
 const createInternship = async (req, res) => {
     try {
         const {
-            companyId,
             title,
             description,
             requirements,
@@ -20,12 +20,17 @@ const createInternship = async (req, res) => {
             deadline,
             images
         } = req.body;
+
+        const companyId = req.company?._id;
         
         // Verify company exists
         const company = await Company.findById(companyId);
         if (!company) {
             return res.status(404).json({ success: false, message: 'Company not found' });
         }
+
+        const proAccess = await ensureProAccess(companyId);
+        const isProActive = Boolean(proAccess.allowed);
         
         const internship = await Internship.create({
             companyId,
@@ -40,7 +45,8 @@ const createInternship = async (req, res) => {
             openings,
             deadline,
             images,
-            paymentVerificationStatus: 'pending'
+            paymentVerificationStatus: isProActive ? 'verified' : 'pending',
+            paymentVerifiedAt: isProActive ? new Date() : null
         });
         
         res.status(201).json({ success: true, data: internship });
@@ -129,10 +135,24 @@ const updateInternship = async (req, res) => {
         if (!internship) {
             return res.status(404).json({ success: false, message: 'Internship not found' });
         }
+
+        const companyId = req.company?._id?.toString();
+        if (!companyId || internship.companyId.toString() !== companyId) {
+            return res.status(403).json({ success: false, message: 'Not allowed to update this internship' });
+        }
+
+        const proAccess = await ensureProAccess(companyId);
+        const isProActive = Boolean(proAccess.allowed);
+
+        const updateData = {
+            ...req.body,
+            companyId: internship.companyId,
+            ...(isProActive ? { paymentVerificationStatus: 'verified', paymentVerifiedAt: new Date() } : {})
+        };
         
         internship = await Internship.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            updateData,
             { new: true, runValidators: true }
         );
         
@@ -153,6 +173,11 @@ const deleteInternship = async (req, res) => {
         
         if (!internship) {
             return res.status(404).json({ success: false, message: 'Internship not found' });
+        }
+
+        const companyId = req.company?._id?.toString();
+        if (!companyId || internship.companyId.toString() !== companyId) {
+            return res.status(403).json({ success: false, message: 'Not allowed to delete this internship' });
         }
         
         await internship.remove();

@@ -12,7 +12,11 @@ import {
 } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { resolveUploadUrl } from "./uploadUrl";
-import { getStudentSession as getStoredStudentSession } from "./student_utils";
+import {
+  getStudentSession as getStoredStudentSession,
+  isStudentAuthError,
+  logoutStudent,
+} from "./student_utils";
 
 const INTERNSHIP_API_URL = "http://localhost:5000/api/internships";
 const APPLICATION_API_URL = "http://localhost:5000/api/applications";
@@ -175,7 +179,7 @@ function S_SearchJobs() {
     };
 
     fetchAppliedInternships();
-  }, [studentId, token]);
+  }, [navigate, studentId, token]);
 
   const filteredJobs = useMemo(() => {
     return internships.filter((job) => {
