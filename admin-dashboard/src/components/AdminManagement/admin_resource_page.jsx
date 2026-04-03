@@ -30,6 +30,13 @@ const AdminResourcePage = ({ resourceKey }) => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const shouldUseDark = savedTheme === 'dark';
+    setIsDarkMode(shouldUseDark);
+  }, []);
 
   useEffect(() => {
     const loadRecords = async () => {
@@ -138,53 +145,71 @@ const AdminResourcePage = ({ resourceKey }) => {
       description={config.description}
       allowedRoles={config.allowedRoles}
     >
-      <div className="space-y-6">
+      <div className="space-y-8 pb-10">
         {message && (
-          <div className="rounded-3xl border border-indigo-100 bg-indigo-50 px-6 py-4 text-sm text-indigo-700 shadow-sm">
+          <div className="flex items-center gap-3 rounded-[2rem] border border-emerald-500/20 bg-emerald-500/10 px-6 py-4 text-sm font-bold text-emerald-600 shadow-sm backdrop-blur-sm animate-in fade-in slide-in-from-top-4">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {message}
           </div>
         )}
         {error && (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm text-rose-700 shadow-sm">
+          <div className="flex items-center gap-3 rounded-[2rem] border border-rose-500/20 bg-rose-500/10 px-6 py-4 text-sm font-bold text-rose-600 shadow-sm backdrop-blur-sm animate-in fade-in slide-in-from-top-4">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             {error}
           </div>
         )}
 
-        <div className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-xl">
-          <div className="mb-6 flex items-start justify-between gap-4">
+        <div className={`rounded-[2.5rem] border shadow-sm backdrop-blur-sm transition-all overflow-hidden ${
+          isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/60 bg-white/40 shadow-indigo-500/5'
+        }`}>
+          <div className={`border-b p-8 flex items-start justify-between gap-4 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                {editingId ? `Update ${config.title}` : `Add ${config.title}`}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-2 w-2 rounded-full bg-indigo-600" />
+                <p className={`text-[10px] font-bold uppercase tracking-[0.4em] ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                  Record Management
+                </p>
+              </div>
+              <h2 className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                {editingId ? `Edit ${config.title}` : `New Entry`}
               </h2>
-              <p className="mt-2 text-sm text-slate-600">
-                {editingId ? 'Edit the selected record and save changes.' : 'Create a new record in this table.'}
+              <p className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                {editingId ? 'Modify existing operational data and save changes.' : 'Register a new profile in the database.'}
               </p>
             </div>
             {editingId && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-xl border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-500 hover:text-indigo-800"
+                className={`rounded-xl border px-5 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
+                  isDarkMode 
+                    ? 'border-slate-700 text-slate-300 hover:bg-slate-800' 
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
               >
-                Cancel
+                Abort
               </button>
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="grid gap-5 md:grid-cols-2">
+          <form onSubmit={handleSubmit} className="grid gap-6 p-8 md:grid-cols-2">
             {config.fields.map((field) => (
-              <label key={field.name} className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">{field.label}</span>
+              <label key={field.name} className="block space-y-2">
+                <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{field.label}</span>
                 {field.type === 'select' ? (
                   <select
                     name={field.name}
                     value={formData[field.name]}
                     onChange={handleChange}
                     required={field.required}
-                    className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    className={`w-full rounded-2xl border px-5 py-3 text-sm font-bold outline-none appearance-none transition-all ${
+                      isDarkMode 
+                        ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500' 
+                        : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600'
+                    }`}
                   >
                     {field.options.map((option) => (
-                      <option key={option} value={option}>
+                      <option key={option} value={option} className="dark:bg-slate-900">
                         {option}
                       </option>
                     ))}
@@ -196,130 +221,178 @@ const AdminResourcePage = ({ resourceKey }) => {
                     value={formData[field.name]}
                     onChange={handleChange}
                     required={editingId && field.name === 'password' ? false : field.required}
-                    className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    className={`w-full rounded-2xl border px-5 py-3 text-sm font-medium outline-none transition-all ${
+                      isDarkMode 
+                        ? 'border-slate-700 bg-slate-800/50 text-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10' 
+                        : 'border-slate-200 bg-white text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5'
+                    }`}
+                    placeholder={`Enter ${field.label.toLowerCase()}`}
                   />
                 )}
               </label>
             ))}
 
-            <div className="flex items-end">
+            <div className="flex items-end mt-4">
               <button
                 type="submit"
-                className="w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-blue-600 px-5 py-3 font-semibold text-white transition hover:from-indigo-800 hover:to-blue-700"
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 dark:bg-indigo-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-100 dark:shadow-none hover:scale-[1.01] active:scale-[0.99] transition-all"
               >
-                {editingId ? 'Save Changes' : `Add ${config.title}`}
+                {editingId ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Commit Changes
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    Add {config.title}
+                  </>
+                )}
               </button>
             </div>
           </form>
         </div>
 
-        <div className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-xl overflow-x-auto">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className={`rounded-[2.5rem] border shadow-sm backdrop-blur-sm transition-all overflow-hidden ${
+          isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200/60 bg-white/40 shadow-indigo-500/5'
+        }`}>
+          <div className={`p-8 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-50/50'}`}>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">{config.title} Table</h2>
-              <p className="mt-2 text-sm text-slate-600">View all records and manage them from one place.</p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                <p className={`text-[10px] font-bold uppercase tracking-[0.4em] ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  Operational Registry
+                </p>
+              </div>
+              <h2 className={`text-2xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                Platform Workspace
+              </h2>
+              <p className={`mt-2 text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Managing {records.length} total entries under the {config.title} security scope.
+              </p>
             </div>
 
-            <div className="flex flex-col gap-3 lg:items-end">
+            <div className="flex flex-col gap-6 lg:items-end">
               <button
                 type="button"
                 onClick={handleDownloadReport}
                 disabled={filteredRecords.length === 0}
-                className="rounded-2xl bg-gradient-to-r from-violet-700 to-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-violet-800 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-2 rounded-2xl bg-slate-900 dark:bg-indigo-600 px-6 py-4 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Download PDF Report
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export Registry Report
               </button>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="block">
-                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-indigo-500">
-                    Search
-                  </span>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="relative group min-w-[200px]">
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder={`Search ${config.title.toLowerCase()}...`}
-                    className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    placeholder="Search registry..."
+                    className={`w-full rounded-2xl border px-5 py-3 pl-11 text-sm font-medium outline-none transition-all ${
+                      isDarkMode 
+                        ? 'border-slate-700 bg-slate-800 text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10' 
+                        : 'border-slate-200 bg-white text-slate-900 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5'
+                    }`}
                   />
-                </label>
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
 
                 {statusField && (
-                  <label className="block">
-                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-indigo-500">
-                      Status
-                    </span>
+                  <div className="relative min-w-[140px]">
                     <select
                       value={statusFilter}
                       onChange={(event) => setStatusFilter(event.target.value)}
-                      className="w-full rounded-2xl border border-indigo-100 px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                      className={`w-full rounded-2xl border px-5 py-3 text-sm font-bold outline-none appearance-none transition-all ${
+                        isDarkMode 
+                          ? 'border-slate-700 bg-slate-800 text-white focus:border-blue-500' 
+                          : 'border-slate-200 bg-white text-slate-900 focus:border-blue-600'
+                      }`}
                     >
-                      <option value="All">All</option>
+                      <option value="All">All Status</option>
                       {statusField.options.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
+                        <option key={option} value={option} className="dark:bg-slate-900">{option}</option>
                       ))}
                     </select>
-                  </label>
+                    <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
-          <p className="mt-4 text-sm font-medium text-slate-500">
-            Showing {filteredRecords.length} of {records.length} records
-          </p>
-
-          <table className="mt-6 min-w-full divide-y divide-indigo-100">
-            <thead className="bg-indigo-50/80">
-              <tr className="text-left text-xs uppercase tracking-[0.2em] text-slate-500">
-                {config.columns.map((column) => (
-                  <th key={column} className="px-4 py-3">{column}</th>
-                ))}
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredRecords.map((record) => (
-                <tr key={record._id} className="hover:bg-indigo-50/40">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className={`border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
                   {config.columns.map((column) => (
-                    <td key={`${record._id}-${column}`} className="px-4 py-4 text-sm text-slate-700">
-                      {String(getValue(record, column) ?? '-')}
-                    </td>
+                    <th key={column} className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{column}</th>
                   ))}
-                  <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(record)}
-                        className="rounded-xl bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(record)}
-                        className="rounded-xl bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+                  <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 text-right">Actions</th>
                 </tr>
-              ))}
-              {filteredRecords.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={config.columns.length + 1}
-                    className="px-4 py-8 text-center text-sm text-slate-500"
-                  >
-                    No matching records found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                {filteredRecords.map((record) => (
+                  <tr key={record._id} className="group hover:bg-indigo-50/10 transition-colors">
+                    {config.columns.map((column) => (
+                      <td key={`${record._id}-${column}`} className="px-8 py-5 text-sm font-medium">
+                        {String(getValue(record, column) ?? '-')}
+                      </td>
+                    ))}
+                    <td className="px-8 py-5">
+                      <div className="flex items-center justify-end gap-3 translate-x-2 group-hover:translate-x-0 transition-transform">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(record)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+                            isDarkMode 
+                              ? 'bg-slate-800 text-slate-400 hover:bg-indigo-500/20 hover:text-indigo-400' 
+                              : 'bg-slate-100 text-slate-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm'
+                          }`}
+                          title="Edit Resource"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(record)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${
+                            isDarkMode 
+                              ? 'bg-slate-800 text-slate-400 hover:bg-rose-500/20 hover:text-rose-400' 
+                              : 'bg-slate-100 text-slate-500 hover:bg-white hover:text-rose-600 hover:shadow-sm'
+                          }`}
+                          title="Purge Resource"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredRecords.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={config.columns.length + 1}
+                      className="px-8 py-20 text-center"
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No entries found in this scope</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className={`p-6 border-t ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400">
+              End of Registry Sequence
+            </p>
+          </div>
         </div>
       </div>
     </AdminLayout>

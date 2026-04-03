@@ -49,68 +49,94 @@ const AdminLayout = ({ title, description, children, allowedRoles }) => {
   };
 
   return (
-    <div className={`min-h-screen ${
+    <div className={`min-h-screen font-sans selection:bg-indigo-100 selection:text-indigo-900 ${
       isDarkMode
-        ? 'bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(37,99,235,0.22),_transparent_30%),linear-gradient(180deg,_#0b1f43_0%,_#0d2957_48%,_#0f2f62_100%)]'
-        : 'bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.18),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.16),_transparent_30%),linear-gradient(180deg,_#ffffff_0%,_#f7f7ff_48%,_#eff4ff_100%)]'
+        ? 'bg-[#0b172a] text-slate-200'
+        : 'bg-[#f8fafc] text-slate-900'
     }`}>
-      <header className={`border-b backdrop-blur ${isDarkMode ? 'border-sky-800/50 bg-[#112d5b]/85' : 'border-indigo-100 bg-white/85'}`}>
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div>
-            <p className={`text-sm font-semibold uppercase tracking-[0.28em] ${isDarkMode ? 'text-cyan-300' : 'text-indigo-600'}`}>
-              StepIn Admin Management
-            </p>
-            <h1 className={`mt-2 text-4xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{title}</h1>
-            <p className={`mt-3 max-w-3xl ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>{description}</p>
-            {sessionAdmin && (
-              <p className={`mt-4 text-sm font-semibold ${isDarkMode ? 'text-cyan-100' : 'text-indigo-950'}`}>
-                Logged in as {sessionAdmin.fullName} ({sessionAdmin.role})
-              </p>
-            )}
-          </div>
+      {/* Dynamic Background Accents */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className={`absolute -top-24 -right-24 w-96 h-96 rounded-full blur-[120px] opacity-20 ${isDarkMode ? 'bg-indigo-500' : 'bg-indigo-200'}`} />
+        <div className={`absolute top-1/2 -left-24 w-72 h-72 rounded-full blur-[100px] opacity-10 ${isDarkMode ? 'bg-blue-500' : 'bg-blue-200'}`} />
+      </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={toggleTheme}
-              className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
-                isDarkMode
-                  ? 'border-sky-700 bg-[#0f294f] text-cyan-200 hover:bg-[#123564]'
-                  : 'border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50'
-              }`}
-            >
-              <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${isDarkMode ? 'bg-sky-950' : 'bg-slate-200'}`}>
-                <span className={`absolute h-5 w-5 rounded-full shadow transition-transform ${isDarkMode ? 'translate-x-5 bg-cyan-200' : 'translate-x-1 bg-white'}`} />
-              </span>
-              <span className="text-xs uppercase tracking-[0.12em]">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
-            </button>
-            {sessionAdmin && getAdminNavigation(sessionAdmin.role).map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`rounded-2xl border px-5 py-3 font-semibold transition ${
-                  isDarkMode
-                    ? 'border-sky-700 bg-[#123564] text-slate-100 hover:border-cyan-400 hover:text-cyan-200'
-                    : 'border-indigo-200 bg-white text-slate-700 hover:border-indigo-500 hover:text-indigo-700'
-                }`}
+      <header className={`relative z-10 border-b backdrop-blur-md transition-colors ${
+        isDarkMode ? 'border-slate-800 bg-slate-900/80' : 'border-slate-200 bg-white/80'
+      }`}>
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+                <p className={`text-[10px] font-bold uppercase tracking-[0.4em] ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                  StepIn Portal
+                </p>
+              </div>
+              <h1 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                {title}
+              </h1>
+              <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                {description}
+              </p>
+              {sessionAdmin && (
+                <p className={`mt-2 text-xs font-bold ${isDarkMode ? 'text-cyan-200' : 'text-indigo-700'}`}>
+                  OPERATOR: {sessionAdmin.fullName} ({sessionAdmin.role})
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl">
+                <button
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-xl transition-all ${
+                    !isDarkMode ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Light Mode"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.95 16.95l.707.707M7.636 7.636l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                </button>
+                <button
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-xl transition-all ${
+                    isDarkMode ? 'bg-slate-700 shadow-sm text-blue-400' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="Dark Mode"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+              </div>
+
+              <div className="h-10 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
+
+              {sessionAdmin && getAdminNavigation(sessionAdmin.role).map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex h-10 items-center justify-center rounded-xl border px-5 text-sm font-bold transition-all ${
+                    isDarkMode 
+                      ? 'border-slate-700 hover:bg-slate-800 text-slate-300' 
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              
+              <button
+                onClick={handleLogout}
+                className="flex h-10 items-center justify-center rounded-xl bg-slate-900 dark:bg-indigo-600 px-6 text-sm font-bold text-white shadow-lg shadow-indigo-100 dark:shadow-none hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                {item.label}
-              </Link>
-            ))}
-            <button
-              onClick={handleLogout}
-              className={`rounded-2xl px-5 py-3 font-semibold text-white transition ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-sky-700 to-blue-700 hover:from-sky-800 hover:to-blue-800'
-                  : 'bg-gradient-to-r from-indigo-700 to-blue-600 hover:from-indigo-800 hover:to-blue-700'
-              }`}
-            >
-              Logout
-            </button>
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">{children}</main>
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 };
