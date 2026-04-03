@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
   FaUser,
-  FaFileUpload,
   FaBriefcase,
   FaSearch,
   FaClipboardList,
@@ -31,13 +30,6 @@ const dashboardCards = [
     desc: "View and update your personal details, skills, and education.",
     actionKey: "profile",
     btn: "View Profile",
-  },
-  {
-    icon: <FaFileUpload />,
-    title: "View Companies",
-    desc: "Explore companies and opportunities available for you.",
-    actionKey: "companies",
-    btn: "View Companies",
   },
   {
     icon: <FaSearch />,
@@ -122,13 +114,8 @@ function S_Dashboard() {
 
   const openProfileForm = () => navigate("/student/profile");
 
-  const openCompanyProfileView = async () => {
-    navigate("/student/profile/company-view");
-  };
-
   const cardActions = {
     profile: openStudentProfile,
-    companies: openCompanyProfileView,
     searchJobs: () => navigate("/student/search-jobs"),
     jobs: () => navigate("/student/jobs"),
     apply: () => navigate("/student/apply-jobs"),
