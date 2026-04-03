@@ -8,6 +8,7 @@ import CompanyProfile from './C_CompanyProfile';
 import ApplicationManagement from './C_ApplicationManagement';
 import CompanyReviews from './C_CompanyReviews';
 import JobPostBot from './C_JobPostBot';
+import DraggableBotAssistant from './C_DraggableBotAssistant';
 
 const INTERNSHIP_REFRESH_INTERVAL_MS = 10000;
 
@@ -130,6 +131,7 @@ const C_CompanyDashboard = () => {
 
     return (
         <div className="min-h-screen dark:bg-slate-900 bg-gray-50">
+            <DraggableBotAssistant onOpenJobPostBot={() => setActiveTab('ai-post')} />
             {activeTab !== 'ai-post' && (
                 <header className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10 border-b dark:border-slate-700">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

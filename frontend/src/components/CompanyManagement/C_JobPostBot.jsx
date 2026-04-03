@@ -59,7 +59,20 @@ const IMAGE_FITS = {
     fit: 'Fit inside frame'
 };
 
+const LOGO_PLACEMENTS = {
+    header: 'Header',
+    bottom: 'Bottom',
+    left: 'Left side',
+    right: 'Right side'
+};
+
 const IMAGE_REMOVE_BACKGROUND_THRESHOLD = 245;
+
+const DISTRICT_OPTIONS = [
+    'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara',
+    'Kandy', 'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara', 'Moneragala', 'Mullaitivu', 'Nuwara Eliya',
+    'Polonnaruwa', 'Puttalam', 'Ratnapura', 'Trincomalee', 'Vavuniya'
+];
 
 const C_JobPostBot = () => {
     const [formData, setFormData] = useState({
@@ -76,6 +89,9 @@ const C_JobPostBot = () => {
     const [referenceImage, setReferenceImage] = useState(null);
     const [referencePreview, setReferencePreview] = useState('');
     const [imagePlacement, setImagePlacement] = useState('middle');
+    const [companyLogoFile, setCompanyLogoFile] = useState(null);
+    const [companyLogoPreview, setCompanyLogoPreview] = useState(localStorage.getItem('companyLogo') || localStorage.getItem('logo') || '');
+    const [logoPlacement, setLogoPlacement] = useState('header');
     const [imageFit, setImageFit] = useState('crop');
     const [removeBackground, setRemoveBackground] = useState(false);
     const [statusMessage, setStatusMessage] = useState('');
@@ -96,8 +112,30 @@ const C_JobPostBot = () => {
             if (referencePreview) {
                 URL.revokeObjectURL(referencePreview);
             }
+            if (companyLogoPreview && companyLogoPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(companyLogoPreview);
+            }
         };
-    }, [generatedPosterUrl, referencePreview]);
+    }, [generatedPosterUrl, referencePreview, companyLogoPreview]);
+
+    const buildDescriptionWithCompany = (description, companyName) => {
+        const safeDescription = String(description || '').trim();
+        const safeCompanyName = String(companyName || '').trim();
+
+        if (!safeCompanyName) {
+            return safeDescription;
+        }
+
+        if (!safeDescription) {
+            return safeCompanyName + ' is hiring interns. Apply now to join our team.';
+        }
+
+        if (safeDescription.toLowerCase().includes(safeCompanyName.toLowerCase())) {
+            return safeDescription;
+        }
+
+        return safeCompanyName + ' is hiring. ' + safeDescription;
+    };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -111,7 +149,7 @@ const C_JobPostBot = () => {
         setFormData((current) => ({
             ...current,
             title: value,
-            description: generatedDescription
+            description: buildDescriptionWithCompany(generatedDescription, current.companyName)
         }));
     };
 
@@ -129,7 +167,10 @@ const C_JobPostBot = () => {
             
             const selectedDesc = JOB_DESCRIPTIONS[formData.title] || 'We are looking for a talented professional to join our team. Please apply with your resume and cover letter.';
             
-            setFormData(current => ({ ...current, description: selectedDesc }));
+            setFormData(current => ({
+                ...current,
+                description: buildDescriptionWithCompany(selectedDesc, current.companyName)
+            }));
             setStatusMessage('Job description generated successfully!');
         } catch (err) {
             setErrorMessage('Failed to generate description.');
@@ -144,10 +185,33 @@ const C_JobPostBot = () => {
         setFormData((current) => ({
             ...current,
             title: position,
-            description: generatedDescription
+            description: buildDescriptionWithCompany(generatedDescription, current.companyName)
         }));
         setShowDescriptionGenerator(false);
         setStatusMessage('Description loaded: ' + position);
+        setErrorMessage('');
+    };
+
+    const handleCompanyLogoChange = (event) => {
+        const file = event.target.files ? event.target.files[0] : null;
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            setErrorMessage('Please upload a valid logo image file.');
+            return;
+        }
+
+        if (companyLogoPreview && companyLogoPreview.startsWith('blob:')) {
+            URL.revokeObjectURL(companyLogoPreview);
+        }
+
+        const logoUrl = URL.createObjectURL(file);
+        setCompanyLogoFile(file);
+        setCompanyLogoPreview(logoUrl);
+        setStatusMessage('Company logo selected successfully.');
         setErrorMessage('');
     };
 
@@ -308,6 +372,40 @@ const C_JobPostBot = () => {
         ctx.restore();
     };
 
+    const drawCompanyLogo = (ctx, source) => {
+        if (!source) {
+            return;
+        }
+
+        const configByPlacement = {
+            header: { x: 905, y: 155, radius: 52 },
+            bottom: { x: 905, y: 1170, radius: 50 },
+            left: { x: 150, y: 675, radius: 46 },
+            right: { x: 930, y: 675, radius: 46 }
+        };
+
+        const config = configByPlacement[logoPlacement] || configByPlacement.header;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(config.x, config.y, config.radius + 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.beginPath();
+        ctx.arc(config.x, config.y, config.radius, 0, Math.PI * 2);
+        ctx.clip();
+
+        const scale = Math.max((config.radius * 2) / (source.width || 1), (config.radius * 2) / (source.height || 1));
+        const drawWidth = (source.width || 1) * scale;
+        const drawHeight = (source.height || 1) * scale;
+        const drawX = config.x - drawWidth / 2;
+        const drawY = config.y - drawHeight / 2;
+        ctx.drawImage(source, drawX, drawY, drawWidth, drawHeight);
+        ctx.restore();
+    };
+
     const getPosterLayout = () => {
         const layouts = {
             top: {
@@ -399,6 +497,7 @@ const C_JobPostBot = () => {
 
         const layout = getPosterLayout();
         let processedImage = null;
+        let companyLogoImage = null;
 
         if (referenceImage) {
             const imageUrl = URL.createObjectURL(referenceImage);
@@ -410,6 +509,21 @@ const C_JobPostBot = () => {
             }
         }
 
+        if (companyLogoFile) {
+            const logoUrl = URL.createObjectURL(companyLogoFile);
+            try {
+                companyLogoImage = await loadImage(logoUrl);
+            } finally {
+                URL.revokeObjectURL(logoUrl);
+            }
+        } else if (companyLogoPreview) {
+            try {
+                companyLogoImage = await loadImage(companyLogoPreview);
+            } catch (error) {
+                companyLogoImage = null;
+            }
+        }
+
         ctx.fillStyle = '#0f172a';
         ctx.font = '700 66px Arial';
         wrapText(ctx, formData.title || 'Job Title', layout.titleX || 110, layout.titleY, layout.descriptionWidth || 820, 74, 2);
@@ -418,13 +532,15 @@ const C_JobPostBot = () => {
         ctx.font = '400 28px Arial';
         wrapText(
             ctx,
-            formData.description || 'Add a short job description to create a clean internship poster.',
+            buildDescriptionWithCompany(formData.description, formData.companyName) || 'Add a short job description to create a clean internship poster.',
             layout.descriptionX || 110,
             layout.descriptionY,
             layout.descriptionWidth || 820,
             42,
             layout.descriptionLines || 6
         );
+
+        drawCompanyLogo(ctx, companyLogoImage);
 
         drawImageCard(ctx, processedImage, layout.image, 'Upload an image to place it here');
 
@@ -568,13 +684,17 @@ const C_JobPostBot = () => {
                     </div>
                     <div>
                         <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">Location</label>
-                        <input
+                        <select
                             name="location"
                             value={formData.location}
                             onChange={handleChange}
-                            placeholder="Colombo"
                             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        />
+                        >
+                            <option value="">Select Location</option>
+                            {DISTRICT_OPTIONS.map((district) => (
+                                <option key={district} value={district}>{district}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">Duration</label>
@@ -740,6 +860,42 @@ const C_JobPostBot = () => {
                                 </div>
                             </div>
                         )}
+
+                        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-950">
+                            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300">Company Logo</p>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">Upload your company logo and choose where it appears on the poster.</p>
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleCompanyLogoChange}
+                                className="mt-3 block w-full text-sm text-gray-700 dark:text-slate-300"
+                            />
+
+                            <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
+                                {Object.entries(LOGO_PLACEMENTS).map(([key, label]) => (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => setLogoPlacement(key)}
+                                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                                            logoPlacement === key
+                                                ? 'border-indigo-500 bg-indigo-600 text-white shadow-md'
+                                                : 'border-slate-300 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-indigo-400/50 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {companyLogoPreview && (
+                                <div className="mt-4 flex items-center gap-3">
+                                    <img src={companyLogoPreview} alt="Company logo preview" className="h-14 w-14 rounded-full border border-slate-200 object-cover dark:border-slate-700" />
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">Logo position: {LOGO_PLACEMENTS[logoPlacement]}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex flex-col gap-3 self-start rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
