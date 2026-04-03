@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { resolveUploadUrl } from "./uploadUrl";
+import { getStudentSession as getStoredStudentSession } from "./student_utils";
 
 const INTERNSHIP_API_URL = "http://localhost:5000/api/internships";
 const APPLICATION_API_URL = "http://localhost:5000/api/applications";
@@ -74,9 +75,10 @@ const PREFERRED_AREAS = [
   "Cybersecurity Analyst",
 ];
 
-const getStudentSession = () => {
-  const account = JSON.parse(localStorage.getItem("studentAccount") || "null");
-  const token = localStorage.getItem("token") || "";
+const getStudentAuth = () => {
+  const session = getStoredStudentSession();
+  const account = session?.student || JSON.parse(localStorage.getItem("studentAccount") || "null");
+  const token = session?.token || "";
 
   return {
     studentId: account?._id || "",
@@ -121,7 +123,7 @@ function S_SearchJobs() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [applyingId, setApplyingId] = useState("");
   const [appliedIds, setAppliedIds] = useState([]);
-  const { studentId, token } = useMemo(() => getStudentSession(), []);
+  const { studentId, token } = useMemo(() => getStudentAuth(), []);
 
   useEffect(() => {
     const fetchInternships = async () => {

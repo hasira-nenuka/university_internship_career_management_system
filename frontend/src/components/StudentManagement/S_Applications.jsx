@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { resolveUploadUrl } from "./uploadUrl";
+import { getStudentSession as getStoredStudentSession } from "./student_utils";
 
 const APPLICATIONS_API_URL = "http://localhost:5000/api/applications";
 
@@ -63,14 +64,15 @@ function S_Applications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("token");
+  const session = getStoredStudentSession();
+  const token = session?.token || "";
   const studentAccount = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem("studentAccount")) || null;
+      return session?.student || JSON.parse(localStorage.getItem("studentAccount")) || null;
     } catch {
       return null;
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     const loadApplications = async () => {

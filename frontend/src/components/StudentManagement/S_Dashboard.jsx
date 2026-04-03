@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { resolveUploadUrl } from "./uploadUrl";
+import { logoutStudent } from "./student_utils";
 
 const PROFILE_API_BASE_URL = "http://localhost:5000/api/profiles";
 
@@ -75,9 +76,7 @@ function S_Dashboard() {
   );
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("student");
-    localStorage.removeItem("studentAccount");
+    logoutStudent();
     navigate("/login/student");
   };
 

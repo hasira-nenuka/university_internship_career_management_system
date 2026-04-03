@@ -10,14 +10,16 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { resolveUploadUrl } from "./uploadUrl";
+import { getStudentSession as getStoredStudentSession } from "./student_utils";
 
 const INTERNSHIPS_API_URL = "http://localhost:5000/api/internships";
 const APPLICATIONS_API_URL = "http://localhost:5000/api/applications";
 
-const getStudentSession = () => {
+const getStudentAuth = () => {
+  const session = getStoredStudentSession();
   const student = JSON.parse(localStorage.getItem("student") || "null");
-  const account = JSON.parse(localStorage.getItem("studentAccount") || "null");
-  const token = localStorage.getItem("token") || "";
+  const account = session?.student || JSON.parse(localStorage.getItem("studentAccount") || "null");
+  const token = session?.token || "";
 
   return {
     studentProfile: student || null,
@@ -76,7 +78,7 @@ function S_ApplyJobs() {
   const [notice, setNotice] = useState("");
   const [appliedIds, setAppliedIds] = useState([]);
 
-  const { studentProfile, studentId, token } = useMemo(() => getStudentSession(), []);
+  const { studentProfile, studentId, token } = useMemo(() => getStudentAuth(), []);
   const preferredField = studentProfile?.preferredField || "";
 
   const verifiedInternships = useMemo(() => {
