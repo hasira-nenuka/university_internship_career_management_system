@@ -5,6 +5,7 @@ const {
   createAdminPayment,
   getCompanyPayments,
   getAllPayments,
+  getPaymentAnalytics,
   updatePaymentStatus
 } = require("../controllers/p_paymentController");
 const { protectAdmin, allowAdminRoles } = require("../middleware/adminAuthMiddleware");
@@ -21,6 +22,7 @@ router.post("/", (req, res, next) => {
 }, createPayment);
 
 router.get("/admin", protectAdmin, allowAdminRoles("Super Admin", "Payment Manager"), getAllPayments);
+router.get("/admin/analytics", protectAdmin, allowAdminRoles("Super Admin", "Payment Manager"), getPaymentAnalytics);
 router.post("/admin", protectAdmin, allowAdminRoles("Super Admin", "Payment Manager"), createAdminPayment);
 router.get("/all", getAllPayments);
 router.get("/", getAllPayments);

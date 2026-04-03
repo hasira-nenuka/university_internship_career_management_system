@@ -10,6 +10,7 @@ import PaymentSummary from './components/PaymentManagement/p_PaymentSummary';
 import PaymentSuccess from './components/PaymentManagement/p_PaymentSuccess';
 import ProAccountUpgrade from './components/PaymentManagement/p_ProAccountUpgrade';
 import AdminPaymentManagement from './components/AdminManagement/A_PaymentManagement';
+import AdminPaymentAnalytics from './components/AdminManagement/A_PaymentAnalytics';
 import StudentLogin from './components/StudentManagement/student_login';
 import StudentRegister from './components/StudentManagement/student_register';
 import StudentDashboard from './components/StudentManagement/S_Dashboard';
@@ -60,6 +61,7 @@ function App() {
           <Route path="/payments/success" element={<PaymentSuccess />} />
           <Route path="/payments/pro-upgrade" element={<ProAccountUpgrade />} />
           <Route path="/admin/payments" element={<AdminPaymentManagement />} />
+          <Route path="/admin/payments/analytics" element={<AdminPaymentAnalytics />} />
           
           {/* Student Routes */}
           <Route path="/login/student" element={<StudentLogin />} />

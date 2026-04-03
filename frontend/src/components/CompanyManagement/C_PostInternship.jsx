@@ -48,6 +48,34 @@ const isFutureDate = (dateString) => {
     return selectedDate > today;
 };
 
+const IMAGE_UPLOAD_FEE = 500;
+
+const countWords = (text) => {
+    const normalized = String(text || '').trim();
+    if (!normalized) return 0;
+    return normalized.split(/\s+/).length;
+};
+
+const getDescriptionFee = (wordCount) => {
+    if (wordCount <= 20) return 500;
+    if (wordCount <= 60) return 1000;
+    if (wordCount <= 100) return 1500;
+    return 2500;
+};
+
+const calculatePostAmount = ({ description, imageCount }) => {
+    const wordCount = countWords(description);
+    const descriptionFee = getDescriptionFee(wordCount);
+    const imageFee = imageCount > 0 ? IMAGE_UPLOAD_FEE : 0;
+
+    return {
+        totalAmount: descriptionFee + imageFee,
+        descriptionFee,
+        imageFee,
+        wordCount
+    };
+};
+
 const C_PostInternship = ({ onSuccess }) => {
     const [formData, setFormData] = useState({
         title: '',
@@ -67,6 +95,11 @@ const C_PostInternship = ({ onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+
+    const pricing = calculatePostAmount({
+        description: formData.description,
+        imageCount: images.length
+    });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -165,7 +198,15 @@ const C_PostInternship = ({ onSuccess }) => {
                 });
                 setImages([]);
                 setTimeout(() => {
-                    if (onSuccess) onSuccess(result.data);
+                    if (onSuccess) {
+                        onSuccess({
+                            ...result.data,
+                            calculatedPaymentAmount: pricing.totalAmount,
+                            calculatedDescriptionFee: pricing.descriptionFee,
+                            calculatedImageFee: pricing.imageFee,
+                            descriptionWordCount: pricing.wordCount
+                        });
+                    }
                 }, 1200);
             }
         } catch (err) {
@@ -356,6 +397,9 @@ const C_PostInternship = ({ onSuccess }) => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500"
                         placeholder="Describe the internship role, responsibilities, learning opportunities, and what makes this internship unique..."
                     ></textarea>
+                    <div className="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-slate-700 dark:text-slate-300">
+                        Words: {pricing.wordCount} | Description Fee: Rs {pricing.descriptionFee.toFixed(2)} | Image Fee: Rs {pricing.imageFee.toFixed(2)} | Total Post Fee: Rs {pricing.totalAmount.toFixed(2)}
+                    </div>
                 </div>
                 
                 <div>

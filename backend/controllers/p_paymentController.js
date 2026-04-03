@@ -336,6 +336,55 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
+exports.getPaymentAnalytics = async (req, res) => {
+  try {
+    const totalPayments = await Payment.countDocuments();
+    const totalAmountResult = await Payment.aggregate([{ $group: { _id: null, totalAmount: { $sum: "$amount" } } }]);
+    const totalAmount = totalAmountResult[0]?.totalAmount || 0;
+
+    const statusCounts = await Payment.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 }, amount: { $sum: "$amount" } } }
+    ]);
+
+    const payerCounts = await Payment.aggregate([
+      { $group: { _id: "$payerType", count: { $sum: 1 }, amount: { $sum: "$amount" } } }
+    ]);
+
+    const topPartners = await Payment.aggregate([
+      { $match: { payerType: "company" } },
+      {
+        $group: {
+          _id: { companyId: "$companyId", companyName: "$companyName" },
+          totalAmount: { $sum: "$amount" },
+          totalRecords: { $sum: 1 },
+          verifiedRecords: { $sum: { $cond: [{ $eq: ["$status", "verified"] }, 1, 0] } },
+          lastPaymentDate: { $max: "$paymentDate" }
+        }
+      },
+      { $sort: { totalAmount: -1, totalRecords: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          companyId: "$_id.companyId",
+          companyName: "$_id.companyName",
+          totalAmount: 1,
+          totalRecords: 1,
+          verifiedRecords: 1,
+          lastPaymentDate: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: { totalPayments, totalAmount, statusCounts, payerCounts, topPartners }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { paymentId } = req.params;

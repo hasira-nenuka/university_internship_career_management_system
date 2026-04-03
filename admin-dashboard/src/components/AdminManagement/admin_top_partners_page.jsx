@@ -101,31 +101,42 @@ const AdminTopPartnersPage = () => {
       allowedRoles={PAGE_ACCESS.payments}
     >
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-slate-900">Company Payment Ranking</h2>
-            <p className="mt-1 text-slate-600">
-              This list updates automatically from your current payment records.
-            </p>
-          </div>
+        <div className="rounded-3xl border border-cyan-100 bg-[linear-gradient(135deg,_rgba(236,254,255,0.96)_0%,_rgba(239,246,255,0.98)_52%,_rgba(255,251,235,0.96)_100%)] p-6 shadow-xl">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700">Company Ranking Board</p>
+              <h2 className="mt-2 text-3xl font-bold text-slate-900">Company Payment Ranking</h2>
+              <p className="mt-1 text-slate-600">
+                This list updates automatically from your current payment records.
+              </p>
+            </div>
 
-          <Link
-            to="/payments"
-            className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-white px-5 py-3 font-semibold text-indigo-700 transition hover:border-indigo-500 hover:text-indigo-800"
-          >
-            Back to Payment Data
-          </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/payments/analytics"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 px-5 py-3 font-semibold text-white shadow-md transition hover:from-cyan-700 hover:via-sky-700 hover:to-indigo-700"
+              >
+                Analyze
+              </Link>
+              <Link
+                to="/payments"
+                className="inline-flex items-center justify-center rounded-xl border border-cyan-200 bg-white px-5 py-3 font-semibold text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-50"
+              >
+                Back to Payment Data
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
-            <p className="text-sm text-slate-500">Companies Ranked</p>
+          <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-white to-sky-50 p-6 shadow-xl">
+            <p className="text-sm font-semibold text-sky-700">Companies Ranked</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">{partnerTotals.length}</p>
           </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-xl">
-            <p className="text-sm text-emerald-700">Highest Paid Company</p>
+          <div className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-6 shadow-xl">
+            <p className="text-sm font-semibold text-teal-700">Highest Paid Company</p>
             <p className="mt-2 text-xl font-bold text-slate-900">{highestPartner?.companyName || "-"}</p>
-            <p className="mt-1 text-lg font-semibold text-emerald-700">
+            <p className="mt-1 text-lg font-semibold text-teal-700">
               {highestPartner
                 ? `Rs ${highestPartner.amount.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
@@ -134,10 +145,10 @@ const AdminTopPartnersPage = () => {
                 : "-"}
             </p>
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-xl">
-            <p className="text-sm text-amber-700">Lowest Paid Company</p>
+          <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-6 shadow-xl">
+            <p className="text-sm font-semibold text-orange-700">Lowest Paid Company</p>
             <p className="mt-2 text-xl font-bold text-slate-900">{lowestPartner?.companyName || "-"}</p>
-            <p className="mt-1 text-lg font-semibold text-amber-700">
+            <p className="mt-1 text-lg font-semibold text-orange-700">
               {lowestPartner
                 ? `Rs ${lowestPartner.amount.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
@@ -158,31 +169,56 @@ const AdminTopPartnersPage = () => {
               No payment records found to rank companies yet.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-separate border-spacing-y-3 text-sm text-slate-700">
-                <thead>
-                  <tr className="text-left text-slate-500">
-                    <th className="px-4 py-2">Rank</th>
-                    <th className="px-4 py-2">Company Name</th>
-                    <th className="px-4 py-2">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {partnerTotals.map((partner, index) => (
-                    <tr key={partner.companyName} className="rounded-2xl bg-slate-50 shadow-sm">
-                      <td className="px-4 py-4 font-semibold text-slate-900">#{index + 1}</td>
-                      <td className="px-4 py-4 font-semibold text-slate-900">{partner.companyName}</td>
-                      <td className="px-4 py-4 font-semibold text-indigo-700">
+            <div className="space-y-4">
+              {partnerTotals.map((partner, index) => (
+                <div
+                  key={partner.companyName}
+                  className={`rounded-2xl border p-5 shadow-sm transition ${
+                    index === 0
+                      ? "border-teal-200 bg-gradient-to-r from-teal-50 via-cyan-50 to-white"
+                      : index === partnerTotals.length - 1
+                        ? "border-orange-200 bg-gradient-to-r from-orange-50 via-amber-50 to-white"
+                        : "border-slate-200 bg-gradient-to-r from-slate-50 to-white"
+                  }`}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-full text-base font-bold ${
+                          index === 0
+                            ? "bg-teal-600 text-white"
+                            : index === 1
+                              ? "bg-sky-600 text-white"
+                              : index === 2
+                                ? "bg-orange-500 text-white"
+                                : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        #{index + 1}
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-slate-900">{partner.companyName}</p>
+                        <p className="text-sm text-slate-500">
+                          {index === 0 ? "Top earning company" : index === partnerTotals.length - 1 ? "Lowest in current ranking" : "Active ranked partner"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl bg-white px-4 py-3 shadow-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Amount</p>
+                      <p className={`mt-1 text-xl font-bold ${
+                        index === 0 ? "text-teal-700" : index === partnerTotals.length - 1 ? "text-orange-700" : "text-sky-700"
+                      }`}>
                         Rs{" "}
                         {partner.amount.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
                         })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

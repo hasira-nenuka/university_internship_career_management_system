@@ -7,6 +7,7 @@ import AdminCreatePage from './components/AdminManagement/admin_create_page';
 import AdminDashboard from './components/AdminManagement/admin_dashboard';
 import AdminInternshipPage from './components/AdminManagement/admin_internship_page';
 import AdminPaymentPage from './components/AdminManagement/admin_payment_page';
+import AdminPaymentAnalyticsPage from './components/AdminManagement/admin_payment_analytics_page';
 import AdminRegistryPage from './components/AdminManagement/admin_registry_page';
 import AdminReviewPage from './components/AdminManagement/admin_review_page';
 import AdminStudentPage from './components/AdminManagement/admin_student_page';
@@ -34,6 +35,7 @@ function App() {
           <Route path="/internships" element={<AdminInternshipPage />} />
           <Route path="/payments" element={<AdminPaymentPage />} />
           <Route path="/payments/top-partners" element={<AdminTopPartnersPage />} />
+          <Route path="/payments/analytics" element={<AdminPaymentAnalyticsPage />} />
           <Route path="/reviews" element={<AdminReviewPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

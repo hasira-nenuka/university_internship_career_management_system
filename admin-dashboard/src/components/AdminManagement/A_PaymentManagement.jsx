@@ -358,14 +358,15 @@ const A_PaymentManagement = () => {
                 Rs {paymentSummary.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-              <p className="text-sm text-indigo-600">Partner Insights</p>
+            <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 via-sky-50 to-indigo-50 p-4 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">Ranking And Analysis</p>
+              <p className="mt-2 text-sm text-slate-700">Go to the Top Partners page to see company ranking, then open Analyze for charts and updates.</p>
               <button
                 type="button"
                 onClick={() => navigate("/payments/top-partners")}
-                className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-violet-700 to-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-violet-800 hover:to-blue-700"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:from-cyan-700 hover:via-sky-700 hover:to-indigo-700"
               >
-                Top Partners
+                Open Top Partners Page
               </button>
             </div>
           </div>
@@ -554,76 +555,84 @@ const A_PaymentManagement = () => {
               <p className="text-slate-600 text-lg">No payments found for the current search and filters.</p>
               <p className="text-slate-500 text-sm mt-3">Payments will appear here when:</p>
               <ul className="text-slate-500 text-sm mt-2 space-y-1">
-                <li>• Companies submit payment slips from the payment upload page</li>
-                <li>• You manually add payment records using the form above</li>
+                <li>- Companies submit payment slips from the payment upload page</li>
+                <li>- You manually add payment records using the form above</li>
               </ul>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-separate border-spacing-y-2 text-sm text-slate-700">
-                <thead>
-                  <tr className="text-left text-slate-500">
-                    <th className="px-3 py-2">Payer</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2">Party Details</th>
-                    <th className="px-3 py-2">Bank Details</th>
-                    <th className="px-3 py-2">Amount</th>
-                    <th className="px-3 py-2">Dates</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPayments.map((payment) => (
-                    <tr key={payment._id} className="align-top rounded-xl bg-slate-50 shadow-sm">
-                      <td className="px-3 py-4">
-                        <div className="font-semibold text-slate-900">{displayPartyName(payment)}</div>
-                        <div className="text-xs uppercase tracking-wide text-slate-500">company</div>
-                        <div className="mt-1 text-xs text-slate-500">{payment._id}</div>
-                      </td>
-                      <td className="px-3 py-4">
-                        <div className="font-medium">{PAYMENT_LABELS[payment.paymentType] || payment.paymentType}</div>
-                        {payment.internshipTitle ? <div className="text-xs text-slate-500">{payment.internshipTitle}</div> : null}
-                      </td>
-                      <td className="px-3 py-4">
-                        <div>Account Name: {payment.name || "-"}</div>
-                        <div>NIC: {payment.nic || "-"}</div>
-                        <div>Phone: {payment.phoneNumber || "-"}</div>
-                        <div>Email: {payment.payerEmail || "-"}</div>
-                        <div>Company ID: {payment.companyId || "-"}</div>
-                        {payment.notes ? <div className="mt-1 text-xs text-slate-500">Notes: {payment.notes}</div> : null}
-                      </td>
-                      <td className="px-3 py-4">
-                        <div>Bank: {payment.bankName || "-"}</div>
-                        <div>Branch: {payment.branchName || "-"}</div>
-                        <div>Account No: {payment.accountNumber || "-"}</div>
-                        <div>Reference: {payment.referenceNo || "-"}</div>
-                        <div>
-                          Slip:{" "}
-                          {payment.slipUrl ? (
-                            <a href={payment.slipUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">View</a>
-                          ) : "-"}
-                        </div>
-                      </td>
-                      <td className="px-3 py-4 font-semibold text-slate-900">Rs {Number(payment.amount || 0).toFixed(2)}</td>
-                      <td className="px-3 py-4">
-                        <div>Payment: {formatDate(payment.paymentDate)}</div>
-                        <div>Time: {payment.paymentTime || "-"}</div>
-                        <div>Created: {formatDate(payment.createdAt)}</div>
-                        <div>Recorded By: {payment.recordedByAdminName || "-"}</div>
-                      </td>
-                      <td className="px-3 py-4">
-                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_STYLES[payment.status] || STATUS_STYLES.pending}`}>
+            <div className="grid gap-4">
+              {filteredPayments.map((payment) => (
+                <div key={payment._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-xl font-bold text-slate-900">{displayPartyName(payment)}</h3>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[payment.status] || STATUS_STYLES.pending}`}>
                           {formatStatusLabel(payment.status)}
                         </span>
-                      </td>
-                      <td className="px-3 py-4">
-                        <div className="flex min-w-[180px] flex-col gap-2">
+                      </div>
+                      <p className="text-sm font-medium text-slate-700">
+                        {PAYMENT_LABELS[payment.paymentType] || payment.paymentType}
+                        {payment.internshipTitle ? ` • ${payment.internshipTitle}` : ""}
+                      </p>
+                      <p className="text-sm text-slate-500">Record ID: {payment._id}</p>
+                    </div>
+
+                    <div className="rounded-xl bg-white px-4 py-3 text-left shadow-sm xl:min-w-[190px] xl:text-right">
+                      <p className="text-sm text-slate-500">Amount</p>
+                      <p className="mt-1 text-2xl font-bold text-slate-900">Rs {Number(payment.amount || 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 lg:grid-cols-2 2xl:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Company Details</p>
+                      <div className="mt-3 space-y-1 text-sm text-slate-700 break-words">
+                        <p>Company ID: {payment.companyId || "-"}</p>
+                        <p>Account Name: {payment.name || "-"}</p>
+                        <p>Email: {payment.payerEmail || "-"}</p>
+                        <p>Phone: {payment.phoneNumber || "-"}</p>
+                        <p>NIC: {payment.nic || "-"}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Bank Details</p>
+                      <div className="mt-3 space-y-1 text-sm text-slate-700 break-words">
+                        <p>Bank: {payment.bankName || "-"}</p>
+                        <p>Branch: {payment.branchName || "-"}</p>
+                        <p>Account No: {payment.accountNumber || "-"}</p>
+                        <p>Reference: {payment.referenceNo || "-"}</p>
+                        <p>
+                          Slip:{" "}
+                          {payment.slipUrl ? (
+                            <a href={payment.slipUrl} target="_blank" rel="noreferrer" className="font-semibold text-indigo-600 hover:underline">
+                              View Slip
+                            </a>
+                          ) : "-"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payment Timeline</p>
+                      <div className="mt-3 space-y-1 text-sm text-slate-700">
+                        <p>Payment Date: {formatDate(payment.paymentDate)}</p>
+                        <p>Payment Time: {payment.paymentTime || "-"}</p>
+                        <p>Created: {formatDate(payment.createdAt)}</p>
+                        <p>Recorded By: {payment.recordedByAdminName || "-"}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Actions And Notes</p>
+                      <div className="mt-3 space-y-3">
+                        <div className="space-y-2">
                           <button
                             type="button"
                             disabled={actionLoadingId === payment._id || payment.status === "verified"}
                             onClick={() => handleStatusChange(payment._id, "verified")}
-                            className="rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            className="w-full rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                           >
                             {actionLoadingId === payment._id && payment.status !== "verified" ? "Updating..." : "Verify"}
                           </button>
@@ -631,7 +640,7 @@ const A_PaymentManagement = () => {
                             type="button"
                             disabled={actionLoadingId === payment._id || payment.status === "pending"}
                             onClick={() => handleStatusChange(payment._id, "pending")}
-                            className="rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                            className="w-full rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                           >
                             Set Pending
                           </button>
@@ -639,16 +648,22 @@ const A_PaymentManagement = () => {
                             type="button"
                             disabled={actionLoadingId === payment._id}
                             onClick={() => openRejectDialog(payment)}
-                            className="rounded-lg bg-rose-600 px-3 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                            className="w-full rounded-lg bg-rose-600 px-3 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
                           >
                             Reject
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        {payment.notes ? (
+                          <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+                            <p className="font-medium text-slate-700">Notes</p>
+                            <p className="mt-1 break-words">{payment.notes}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
