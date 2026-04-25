@@ -42,6 +42,33 @@ const STATUS_STYLES = {
   rejected: "bg-rose-100 text-rose-700"
 };
 
+const STATUS_BUTTON_STYLES = {
+  verified: {
+    active:
+      "border-emerald-600 bg-emerald-600 text-white shadow-lg shadow-emerald-200/80",
+    inactive:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100"
+  },
+  pending: {
+    active:
+      "border-amber-500 bg-amber-500 text-white shadow-lg shadow-amber-200/80",
+    inactive:
+      "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100"
+  },
+  rejected: {
+    active:
+      "border-rose-500 bg-rose-500 text-white shadow-lg shadow-rose-200/80",
+    inactive:
+      "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100"
+  },
+  all: {
+    active:
+      "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-200/80",
+    inactive:
+      "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+  }
+};
+
 const formatStatusLabel = (status) => {
   if (status === "verified") return "Verified";
   if (status === "pending") return "Pending";
@@ -281,10 +308,19 @@ const A_PaymentManagement = () => {
   const displayPartyName = (payment) => payment.companyName || "-";
 
   const filterButtonClass = (group, value) =>
-    `px-4 py-2 rounded-lg text-sm font-semibold transition ${
+    `inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition duration-200 ${
       filters[group] === value
-        ? "bg-indigo-600 text-white"
-        : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        ? STATUS_BUTTON_STYLES[value]?.active || STATUS_BUTTON_STYLES.all.active
+        : STATUS_BUTTON_STYLES[value]?.inactive || STATUS_BUTTON_STYLES.all.inactive
+    }`;
+
+  const recordActionButtonClass = (tone) =>
+    `inline-flex w-full items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition duration-200 ${
+      tone === "verified"
+        ? "border-emerald-600 bg-gradient-to-r from-emerald-600 to-green-500 text-white shadow-lg shadow-emerald-200/90 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-green-600 disabled:border-emerald-200 disabled:bg-emerald-100 disabled:text-emerald-400 disabled:shadow-none"
+        : tone === "pending"
+          ? "border-amber-500 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200/90 hover:-translate-y-0.5 hover:from-amber-600 hover:to-orange-600 disabled:border-amber-200 disabled:bg-amber-100 disabled:text-amber-400 disabled:shadow-none"
+          : "border-rose-500 bg-gradient-to-r from-rose-600 to-red-500 text-white shadow-lg shadow-rose-200/90 hover:-translate-y-0.5 hover:from-rose-700 hover:to-red-600 disabled:border-rose-200 disabled:bg-rose-100 disabled:text-rose-400 disabled:shadow-none"
     }`;
 
   const handleDownloadReport = () => {
@@ -342,29 +378,29 @@ const A_PaymentManagement = () => {
       allowedRoles={PAGE_ACCESS.payments}
     >
       <div className="space-y-6">
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_52%,#eef6ff_100%)] p-6 shadow-xl md:p-8">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
-              <p className="text-sm text-slate-500">Total Records</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{paymentSummary.total}</p>
+            <div className="rounded-xl border border-blue-200 bg-[linear-gradient(145deg,#eff6ff_0%,#dbeafe_52%,#bfdbfe_100%)] p-4 shadow-lg shadow-blue-100/80">
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Total Records</p>
+              <p className="mt-3 text-3xl font-black text-blue-950 drop-shadow-sm">{paymentSummary.total}</p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
-              <p className="text-sm text-slate-500">Company Payments</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{paymentSummary.companies}</p>
+            <div className="rounded-xl border border-emerald-200 bg-[linear-gradient(145deg,#ecfdf5_0%,#d1fae5_52%,#a7f3d0_100%)] p-4 shadow-lg shadow-emerald-100/80">
+              <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Company Payments</p>
+              <p className="mt-3 text-3xl font-black text-emerald-950 drop-shadow-sm">{paymentSummary.companies}</p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
-              <p className="text-sm text-slate-500">Recorded Amount</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">
+            <div className="rounded-xl border border-amber-200 bg-[linear-gradient(145deg,#fffbeb_0%,#fef3c7_52%,#fde68a_100%)] p-4 shadow-lg shadow-amber-100/80">
+              <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">Recorded Amount</p>
+              <p className="mt-3 text-3xl font-black text-amber-950 drop-shadow-sm">
                 Rs {paymentSummary.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="rounded-xl border border-cyan-200 bg-gradient-to-br from-cyan-50 via-sky-50 to-indigo-50 p-4 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-cyan-700">Ranking And Analysis</p>
-              <p className="mt-2 text-sm text-slate-700">Go to the Top Partners page to see company ranking, then open Analyze for charts and updates.</p>
+            <div className="rounded-xl border border-fuchsia-200 bg-[linear-gradient(135deg,#fff1f2_0%,#fff7ed_24%,#fefce8_50%,#ecfeff_74%,#eef2ff_100%)] p-4 shadow-lg shadow-fuchsia-100/80">
+              <p className="text-sm font-semibold uppercase tracking-wide text-fuchsia-700">Company Payment Ranking</p>
+              <p className="mt-2 text-sm text-slate-700">Open the Top Partners page to view colorful company rankings, then continue to Analyze for charts and payment updates.</p>
               <button
                 type="button"
                 onClick={() => navigate("/payments/top-partners")}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:from-cyan-700 hover:via-sky-700 hover:to-indigo-700"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-fuchsia-600 via-violet-600 to-sky-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-fuchsia-200/80 transition duration-200 hover:-translate-y-0.5 hover:from-fuchsia-700 hover:via-violet-700 hover:to-sky-600"
               >
                 Open Top Partners Page
               </button>
@@ -372,13 +408,13 @@ const A_PaymentManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
+        <div className="rounded-2xl border border-sky-200 bg-[linear-gradient(160deg,#f8fcff_0%,#eef7ff_38%,#e0f2fe_100%)] p-6 shadow-xl shadow-sky-100/70 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">Add Payment Record</h2>
-              <p className="text-slate-600 mt-1">Enter the full company payment details required by the backend.</p>
+              <p className="mt-1 text-slate-600">Enter the full company payment details required by the backend.</p>
             </div>
-            <div className="text-sm text-slate-600 bg-slate-100 px-4 py-2 rounded-lg">
+            <div className="rounded-xl border border-sky-200 bg-white/85 px-4 py-2 text-sm text-sky-900 shadow-sm shadow-sky-100/70">
               Admin: {adminSession?.admin?.fullName || "System Admin"}
             </div>
           </div>
@@ -394,7 +430,7 @@ const A_PaymentManagement = () => {
             </div>
           ) : null}
 
-          <form onSubmit={handleCreatePayment} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <form onSubmit={handleCreatePayment} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <label className="text-sm text-slate-700">
               <span className="mb-1 block font-medium">Payment Type</span>
               <select name="paymentType" value={formData.paymentType} onChange={handleFormChange} className="w-full rounded-lg border border-slate-300 px-3 py-2">
@@ -500,14 +536,18 @@ const A_PaymentManagement = () => {
             </label>
 
             <div className="md:col-span-2 xl:col-span-4">
-              <button type="submit" disabled={submitting} className="rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
-                {submitting ? "Saving..." : "Add Payment Record"}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex min-h-[52px] items-center justify-center rounded-xl bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_45%,#0f766e_100%)] px-6 py-3 font-semibold text-white shadow-lg shadow-blue-200/80 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? "Saving..." : "Add Payment Record +"}
               </button>
             </div>
           </form>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
+        <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] p-6 shadow-xl md:p-8">
           <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Payment Records</h1>
@@ -528,19 +568,21 @@ const A_PaymentManagement = () => {
             </div>
           </div>
 
-          <div className="mb-6 flex flex-wrap gap-3">
-            <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "all" }))} className={filterButtonClass("status", "all")}>All Statuses</button>
-            <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "pending" }))} className={filterButtonClass("status", "pending")}>Pending</button>
-            <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "verified" }))} className={filterButtonClass("status", "verified")}>Verified</button>
-            <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "rejected" }))} className={filterButtonClass("status", "rejected")}>Rejected</button>
-            <button
-              type="button"
-              onClick={handleDownloadReport}
-              disabled={filteredPayments.length === 0}
-              className="rounded-lg bg-gradient-to-r from-violet-700 to-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:from-violet-800 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Export PDF
-            </button>
+          <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 shadow-inner shadow-slate-100">
+            <div className="flex flex-wrap gap-3">
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "all" }))} className={filterButtonClass("status", "all")}>All Statuses</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "pending" }))} className={filterButtonClass("status", "pending")}>Pending</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "verified" }))} className={filterButtonClass("status", "verified")}>Verified</button>
+              <button type="button" onClick={() => setFilters((current) => ({ ...current, status: "rejected" }))} className={filterButtonClass("status", "rejected")}>Rejected</button>
+              <button
+                type="button"
+                onClick={handleDownloadReport}
+                disabled={filteredPayments.length === 0}
+                className="inline-flex items-center justify-center rounded-xl border border-indigo-200 bg-[linear-gradient(135deg,#4f46e5_0%,#2563eb_100%)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/70 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Export PDF
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -573,7 +615,7 @@ const A_PaymentManagement = () => {
                       </div>
                       <p className="text-sm font-medium text-slate-700">
                         {PAYMENT_LABELS[payment.paymentType] || payment.paymentType}
-                        {payment.internshipTitle ? ` • ${payment.internshipTitle}` : ""}
+                        {payment.internshipTitle ? ` | ${payment.internshipTitle}` : ""}
                       </p>
                       <p className="text-sm text-slate-500">Record ID: {payment._id}</p>
                     </div>
@@ -632,25 +674,25 @@ const A_PaymentManagement = () => {
                             type="button"
                             disabled={actionLoadingId === payment._id || payment.status === "verified"}
                             onClick={() => handleStatusChange(payment._id, "verified")}
-                            className="w-full rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            className={recordActionButtonClass("verified")}
                           >
-                            {actionLoadingId === payment._id && payment.status !== "verified" ? "Updating..." : "Verify"}
+                            {actionLoadingId === payment._id && payment.status !== "verified" ? "Updating..." : "Verify Payment"}
                           </button>
                           <button
                             type="button"
                             disabled={actionLoadingId === payment._id || payment.status === "pending"}
                             onClick={() => handleStatusChange(payment._id, "pending")}
-                            className="w-full rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                            className={recordActionButtonClass("pending")}
                           >
-                            Set Pending
+                            Mark Pending
                           </button>
                           <button
                             type="button"
                             disabled={actionLoadingId === payment._id}
                             onClick={() => openRejectDialog(payment)}
-                            className="w-full rounded-lg bg-rose-600 px-3 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                            className={recordActionButtonClass("rejected")}
                           >
-                            Reject
+                            Reject Payment
                           </button>
                         </div>
                         {payment.notes ? (
@@ -682,7 +724,7 @@ const A_PaymentManagement = () => {
               <button
                 type="button"
                 onClick={closeRejectDialog}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-900"
               >
                 Close
               </button>
@@ -709,7 +751,7 @@ const A_PaymentManagement = () => {
               <button
                 type="button"
                 onClick={closeRejectDialog}
-                className="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-slate-50"
               >
                 Cancel
               </button>
@@ -717,7 +759,7 @@ const A_PaymentManagement = () => {
                 type="button"
                 disabled={actionLoadingId === rejectingPayment._id}
                 onClick={handleRejectSubmit}
-                className="rounded-lg bg-rose-600 px-5 py-3 font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-rose-600 to-red-500 px-5 py-3 font-semibold text-white shadow-lg shadow-rose-200/80 transition duration-200 hover:-translate-y-0.5 hover:from-rose-700 hover:to-red-600 disabled:opacity-50"
               >
                 {actionLoadingId === rejectingPayment._id ? "Sending..." : "Send Rejection"}
               </button>

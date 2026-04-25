@@ -131,12 +131,12 @@ const AdminTopPartnersPage = () => {
       allowedRoles={PAGE_ACCESS.payments}
     >
       <div className="space-y-6">
-        <div className="rounded-3xl border border-cyan-100 bg-[linear-gradient(135deg,_rgba(236,254,255,0.96)_0%,_rgba(239,246,255,0.98)_52%,_rgba(255,251,235,0.96)_100%)] p-6 shadow-xl">
+        <div className="rounded-3xl border border-violet-200 bg-[linear-gradient(135deg,_rgba(245,243,255,0.98)_0%,_rgba(224,231,255,0.98)_32%,_rgba(219,234,254,0.98)_62%,_rgba(236,254,255,0.98)_100%)] p-6 shadow-xl shadow-indigo-100/80">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-700">Company Ranking Board</p>
-              <h2 className="mt-2 text-3xl font-bold text-slate-900">Company Payment Ranking</h2>
-              <p className="mt-1 text-slate-600">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-violet-700">Company Ranking Board</p>
+              <h2 className="mt-2 text-3xl font-bold text-slate-950">Company Payment Ranking</h2>
+              <p className="mt-1 text-slate-700">
                 This list updates automatically from your current payment records.
               </p>
             </div>
@@ -144,13 +144,13 @@ const AdminTopPartnersPage = () => {
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/payments/analytics"
-                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-cyan-600 via-sky-600 to-indigo-600 px-5 py-3 font-semibold text-white shadow-md transition hover:from-cyan-700 hover:via-sky-700 hover:to-indigo-700"
+                className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-sky-500 px-5 py-3 font-semibold text-white shadow-lg shadow-indigo-200/80 transition duration-200 hover:-translate-y-0.5 hover:from-violet-700 hover:via-indigo-700 hover:to-sky-600"
               >
                 Analyze
               </Link>
               <Link
                 to="/payments"
-                className="inline-flex items-center justify-center rounded-xl border border-cyan-200 bg-white px-5 py-3 font-semibold text-cyan-800 transition hover:border-cyan-400 hover:bg-cyan-50"
+                className="inline-flex items-center justify-center rounded-xl border border-violet-200 bg-white/90 px-5 py-3 font-semibold text-violet-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:bg-violet-50"
               >
                 Back to Payment Data
               </Link>
