@@ -64,9 +64,9 @@ const AboutUs = () => {
                 {values.map((item) => (
                   <div
                     key={item.label}
-                    className="inline-flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/65 px-4 py-3 text-sm font-semibold text-slate-800 backdrop-blur dark:border-white/12 dark:bg-white/8 dark:text-white"
+                    className="inline-flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/65 px-4 py-3 text-sm font-semibold text-slate-800 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/75 dark:text-slate-100"
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-white/12 dark:text-cyan-200">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-cyan-400/10 dark:text-cyan-200">
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -76,11 +76,11 @@ const AboutUs = () => {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/65 p-6 backdrop-blur dark:border-white/12 dark:bg-white/8">
+              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/65 p-6 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/75">
                 <p className="text-xs uppercase tracking-[0.24em] text-indigo-600 dark:text-cyan-200">Platform Focus</p>
                 <p className="mt-3 text-3xl font-black text-slate-900 dark:text-white">End-to-end internship support</p>
               </div>
-              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/65 p-6 backdrop-blur dark:border-white/12 dark:bg-white/8">
+              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/65 p-6 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/75">
                 <p className="text-xs uppercase tracking-[0.24em] text-indigo-600 dark:text-cyan-200">Core Outcome</p>
                 <p className="mt-3 text-3xl font-black text-slate-900 dark:text-white">Efficiency, transparency, productivity</p>
               </div>

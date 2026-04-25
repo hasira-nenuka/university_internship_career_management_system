@@ -55,7 +55,7 @@ const platformHighlights = [
 
 const News = () => {
   return (
-    <section className="min-h-[70vh] bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.18),_transparent_26%),linear-gradient(180deg,_#ecfeff_0%,_#f8fafc_44%,_#eef2ff_100%)]">
+    <section className="min-h-[70vh] bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.18),_transparent_26%),linear-gradient(180deg,_#ecfeff_0%,_#f8fafc_44%,_#eef2ff_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.14),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.14),_transparent_26%),linear-gradient(180deg,_#020617_0%,_#0f172a_52%,_#111827_100%)]">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-slate-950 text-white shadow-[0_35px_100px_rgba(15,23,42,0.2)]">
           <div className="absolute inset-0 opacity-80">
@@ -72,7 +72,7 @@ const News = () => {
               <h1 className="mt-6 text-4xl font-black leading-tight md:text-5xl">
                 Latest platform updates from INTERNIX
               </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
+              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300 dark:text-slate-300">
                 Follow the latest improvements across student accounts, company accounts, internship workflows, profile management, and pro account related features.
               </p>
             </div>
@@ -94,35 +94,35 @@ const News = () => {
           {featureUpdates.map((item) => (
             <article
               key={item.title}
-              className="rounded-[1.8rem] border border-slate-200/80 bg-white/88 p-7 shadow-[0_22px_60px_rgba(148,163,184,0.18)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(79,70,229,0.14)]"
+              className="rounded-[1.8rem] border border-slate-200/80 bg-white/88 p-7 shadow-[0_22px_60px_rgba(148,163,184,0.18)] backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(79,70,229,0.14)] dark:border-slate-700/80 dark:bg-slate-900/78 dark:shadow-[0_22px_60px_rgba(15,23,42,0.5)] dark:hover:shadow-[0_28px_80px_rgba(8,47,73,0.46)]"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${item.accent} text-2xl text-white shadow-lg`}>
                   {item.icon}
                 </div>
-                <p className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <p className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                   {item.date}
                 </p>
               </div>
-              <h2 className="mt-5 text-2xl font-black text-slate-900">{item.title}</h2>
-              <p className="mt-4 text-base leading-8 text-slate-600">
+              <h2 className="mt-5 text-2xl font-black text-slate-900 dark:text-white">{item.title}</h2>
+              <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-300">
                 {item.summary}
               </p>
             </article>
           ))}
         </div>
 
-        <div className="mt-8 rounded-[2rem] border border-slate-200/80 bg-white/88 p-8 shadow-[0_22px_60px_rgba(148,163,184,0.18)] backdrop-blur md:p-10">
+        <div className="mt-8 rounded-[2rem] border border-slate-200/80 bg-white/88 p-8 shadow-[0_22px_60px_rgba(148,163,184,0.18)] backdrop-blur md:p-10 dark:border-slate-700/80 dark:bg-slate-900/78 dark:shadow-[0_22px_60px_rgba(15,23,42,0.5)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-indigo-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-indigo-500 dark:text-cyan-300">
                 Feature Overview
               </p>
-              <h2 className="mt-4 text-3xl font-black text-slate-900 md:text-4xl">
+              <h2 className="mt-4 text-3xl font-black text-slate-900 md:text-4xl dark:text-white">
                 What this system currently supports
               </h2>
             </div>
-            <div className="rounded-2xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600">
+            <div className="rounded-2xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 dark:bg-cyan-400/10 dark:text-cyan-200">
               Relevant platform details
             </div>
           </div>
@@ -131,13 +131,13 @@ const News = () => {
             {platformHighlights.map((item) => (
               <div
                 key={item.title}
-                className="rounded-[1.6rem] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-cyan-50 p-6"
+                className="rounded-[1.6rem] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-cyan-50 p-6 dark:border-slate-700 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/85"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-2xl text-cyan-300">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-2xl text-cyan-300 dark:bg-cyan-400/10 dark:text-cyan-200">
                   {item.icon}
                 </div>
-                <h3 className="mt-5 text-xl font-black text-slate-900">{item.title}</h3>
-                <p className="mt-4 text-base leading-8 text-slate-600">
+                <h3 className="mt-5 text-xl font-black text-slate-900 dark:text-white">{item.title}</h3>
+                <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-300">
                   {item.text}
                 </p>
               </div>
