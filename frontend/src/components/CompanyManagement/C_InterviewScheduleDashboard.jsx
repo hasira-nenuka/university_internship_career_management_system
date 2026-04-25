@@ -72,6 +72,19 @@ const C_InterviewScheduleDashboard = ({ interviews = {}, internships = [] }) => 
         return `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
     };
 
+    const formatStudentResponse = (status) => {
+        switch (status) {
+            case 'accepted':
+                return 'Accepted';
+            case 'declined':
+                return 'Declined';
+            case 'reschedule_requested':
+                return 'Reschedule Requested';
+            default:
+                return 'Awaiting Response';
+        }
+    };
+
     const downloadInterviewSchedulePdf = () => {
         const doc = new jsPDF({ unit: 'pt', format: 'a4' });
         const margin = 40;
@@ -124,6 +137,8 @@ const C_InterviewScheduleDashboard = ({ interviews = {}, internships = [] }) => 
                 addWrappedLine(`Type: ${formatType(interview.interviewType)}`);
                 addWrappedLine(`Duration: ${interview.duration || 'N/A'}`);
                 addWrappedLine(`Location/Link: ${interview.venueOrLink || 'N/A'}`);
+                addWrappedLine(`Student Response: ${formatStudentResponse(interview.studentResponseStatus)}`);
+                addWrappedLine(`Student Reply Note: ${interview.studentResponseMessage || 'N/A'}`);
                 addWrappedLine(`Notes: ${interview.notes || 'N/A'}`);
                 y += 6;
             });
@@ -228,6 +243,10 @@ const C_InterviewScheduleDashboard = ({ interviews = {}, internships = [] }) => 
                                     <p className="text-xs text-gray-700 dark:text-slate-300 mt-1">Type: {formatType(interview.interviewType)}</p>
                                     <p className="text-xs text-gray-700 dark:text-slate-300">Location/Link: {interview.venueOrLink || 'N/A'}</p>
                                     <p className="text-xs text-gray-700 dark:text-slate-300">Internship: {interview.internshipTitle}</p>
+                                    <p className="text-xs text-gray-700 dark:text-slate-300">Student Response: {formatStudentResponse(interview.studentResponseStatus)}</p>
+                                    {interview.studentResponseMessage && (
+                                        <p className="text-xs text-gray-700 dark:text-slate-300">Reply Note: {interview.studentResponseMessage}</p>
+                                    )}
                                     {interview.notes && (
                                         <p className="text-xs text-gray-700 dark:text-slate-300 mt-1">Notes: {interview.notes}</p>
                                     )}
@@ -254,6 +273,7 @@ const C_InterviewScheduleDashboard = ({ interviews = {}, internships = [] }) => 
                                     <th className="py-2 pr-4">Phone</th>
                                     <th className="py-2 pr-4">Type</th>
                                     <th className="py-2 pr-4">Duration</th>
+                                    <th className="py-2 pr-4">Student Response</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -266,6 +286,7 @@ const C_InterviewScheduleDashboard = ({ interviews = {}, internships = [] }) => 
                                         <td className="py-2 pr-4">{interview.studentPhone || 'N/A'}</td>
                                         <td className="py-2 pr-4">{formatType(interview.interviewType)}</td>
                                         <td className="py-2 pr-4">{interview.duration || 'N/A'}</td>
+                                        <td className="py-2 pr-4">{formatStudentResponse(interview.studentResponseStatus)}</td>
                                     </tr>
                                 ))}
                             </tbody>

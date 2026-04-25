@@ -256,6 +256,19 @@ const C_ApplicationManagement = ({ internships }) => {
         return `${type} interview on ${formattedDate} (${schedule.duration || 'N/A'})`;
     };
 
+    const getStudentInterviewResponseLabel = (status) => {
+        switch (status) {
+            case 'accepted':
+                return 'Accepted';
+            case 'declined':
+                return 'Declined';
+            case 'reschedule_requested':
+                return 'Reschedule Requested';
+            default:
+                return 'Awaiting Response';
+        }
+    };
+
     const handleInterviewScheduleSave = (scheduleData) => {
         const persistSchedule = async () => {
             try {
@@ -417,6 +430,9 @@ const C_ApplicationManagement = ({ internships }) => {
                                                     <p className="text-sm text-emerald-600 font-medium">
                                                         {getInterviewSummaryText(scheduledInterviews[app._id])}
                                                     </p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                        Student Response: {getStudentInterviewResponseLabel(scheduledInterviews[app._id].studentResponseStatus)}
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
@@ -574,6 +590,14 @@ const C_ApplicationManagement = ({ internships }) => {
                                     <p className="font-semibold">Interview Scheduled</p>
                                     <p className="text-sm mt-1">{getInterviewSummaryText(scheduledInterviews[selectedApplication._id])}</p>
                                     <p className="text-sm">Contact: {scheduledInterviews[selectedApplication._id].studentEmail} | {scheduledInterviews[selectedApplication._id].studentPhone}</p>
+                                    <p className="text-sm mt-1">
+                                        Student Response: {getStudentInterviewResponseLabel(scheduledInterviews[selectedApplication._id].studentResponseStatus)}
+                                    </p>
+                                    {scheduledInterviews[selectedApplication._id].studentResponseMessage && (
+                                        <p className="text-sm mt-1">
+                                            Reply Note: {scheduledInterviews[selectedApplication._id].studentResponseMessage}
+                                        </p>
+                                    )}
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <button
                                             onClick={() => setInterviewApplication(selectedApplication)}

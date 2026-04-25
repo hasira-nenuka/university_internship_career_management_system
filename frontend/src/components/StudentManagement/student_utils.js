@@ -129,6 +129,38 @@ export const getStudentInterviewSchedules = async () => {
   }
 };
 
+export const respondToStudentInterview = async (scheduleId, responseStatus, responseMessage = '') => {
+  try {
+    const auth = getAuthHeader();
+    const endpoints = [
+      `${API_URL}/interviews/${scheduleId}/respond`,
+      `${API_URL}/interview-schedules/${scheduleId}/respond`,
+      `${API_URL}/interviewSchedule/${scheduleId}/respond`,
+    ];
+
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await axios.put(
+          endpoint,
+          { responseStatus, responseMessage },
+          auth
+        );
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (error.response?.status !== 404) {
+          throw error;
+        }
+      }
+    }
+
+    throw lastError || new Error('Interview response route not found');
+  } catch (error) {
+    throw normalizeStudentError(error, 'Failed to send interview response');
+  }
+};
+
 export const submitStudentReview = async (reviewData) => {
     try {
         const response = await axios.post('http://localhost:5000/api/reviews/student', reviewData, getAuthHeader());

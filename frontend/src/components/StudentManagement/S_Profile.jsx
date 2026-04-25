@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaBell, FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 import { resolveUploadUrl } from "./uploadUrl";
-import { getStudentInterviewSchedules } from "./student_utils";
+import { getStudentInterviewSchedules, respondToStudentInterview } from "./student_utils";
 
 const API_BASE_URL = "http://localhost:5000/api/profiles";
 const SKILL_FIELDS = ["frontendSkills", "backendSkills", "databaseSkills"];
@@ -41,6 +41,8 @@ function S_Profile() {
   const [interviewSchedules, setInterviewSchedules] = useState([]);
   const [loadingInterviews, setLoadingInterviews] = useState(false);
   const [interviewError, setInterviewError] = useState("");
+  const [responseDrafts, setResponseDrafts] = useState({});
+  const [submittingResponses, setSubmittingResponses] = useState({});
   const navigate = useNavigate();
 
   const formatInterviewDate = (dateValue) => {
@@ -66,6 +68,120 @@ function S_Profile() {
       }),
     [interviewSchedules]
   );
+
+  const getResponseBadge = (status) => {
+    switch (status) {
+      case "accepted":
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
+      case "declined":
+        return "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
+      case "reschedule_requested":
+        return "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300";
+      default:
+        return "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
+    }
+  };
+
+  const getResponseLabel = (status) => {
+    switch (status) {
+      case "accepted":
+        return "Accepted";
+      case "declined":
+        return "Declined";
+      case "reschedule_requested":
+        return "Reschedule Requested";
+      default:
+        return "Awaiting Response";
+    }
+  };
+
+  const updateResponseDraft = (scheduleId, value) => {
+    setResponseDrafts((current) => ({
+      ...current,
+      [scheduleId]: value,
+    }));
+  };
+
+  const handleInterviewResponse = async (schedule, responseStatus) => {
+    const scheduleId = schedule?._id;
+    if (!scheduleId) return;
+
+    const responseMessage = String(responseDrafts[scheduleId] || "").trim();
+
+    if ((responseStatus === "declined" || responseStatus === "reschedule_requested") && !responseMessage) {
+      alert("Please enter a short reason before sending this response.");
+      return;
+    }
+
+    setSubmittingResponses((current) => ({ ...current, [scheduleId]: true }));
+
+    try {
+      const result = await respondToStudentInterview(scheduleId, responseStatus, responseMessage);
+      const updatedSchedule = result?.data;
+
+      setInterviewSchedules((current) =>
+        current.map((item) => (item._id === scheduleId ? { ...item, ...updatedSchedule } : item))
+      );
+
+      if (responseStatus === "accepted") {
+        setResponseDrafts((current) => ({ ...current, [scheduleId]: "" }));
+      }
+    } catch (error) {
+      alert(error?.message || "Failed to send interview response");
+    } finally {
+      setSubmittingResponses((current) => ({ ...current, [scheduleId]: false }));
+    }
+  };
+
+  const downloadCalendarInvite = (schedule) => {
+    if (!schedule?.interviewDateTime) return;
+
+    const startDate = new Date(schedule.interviewDateTime);
+    if (Number.isNaN(startDate.getTime())) return;
+
+    const durationValue = parseInt(String(schedule.duration || "30"), 10);
+    const durationMinutes = Number.isFinite(durationValue) ? durationValue : 30;
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+
+    const formatDate = (value) =>
+      value
+        .toISOString()
+        .replace(/[-:]/g, "")
+        .replace(/\.\d{3}Z$/, "Z");
+
+    const escapeIcs = (value) =>
+      String(value || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+
+    const fileContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//StepIn//Interview Schedule//EN",
+      "BEGIN:VEVENT",
+      `UID:${schedule._id || schedule.referenceKey || Date.now()}@stepin`,
+      `DTSTAMP:${formatDate(new Date())}`,
+      `DTSTART:${formatDate(startDate)}`,
+      `DTEND:${formatDate(endDate)}`,
+      `SUMMARY:${escapeIcs(`${schedule.internshipTitle || "Interview"} - ${schedule.companyName || "Company"}`)}`,
+      `DESCRIPTION:${escapeIcs(schedule.notes || `Interview with ${schedule.companyName || "company"}`)}`,
+      `LOCATION:${escapeIcs(schedule.venueOrLink || "Online")}`,
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const blob = new Blob([fileContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${(schedule.companyName || "interview").replace(/\s+/g, "-").toLowerCase()}-interview.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -295,6 +411,16 @@ function S_Profile() {
                           <p className="text-sm font-bold text-slate-900 dark:text-white">
                             {schedule.internshipTitle || "Internship Interview"}
                           </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${getResponseBadge(schedule.studentResponseStatus)}`}>
+                              {getResponseLabel(schedule.studentResponseStatus)}
+                            </span>
+                            {schedule.studentRespondedAt && (
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Updated {formatInterviewDate(schedule.studentRespondedAt)}
+                              </span>
+                            )}
+                          </div>
 
                           <div className="mt-2 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
                             <p className="flex items-start gap-2">
@@ -320,6 +446,55 @@ function S_Profile() {
                                 Note: {schedule.notes}
                               </p>
                             )}
+                            {schedule.studentResponseMessage && (
+                              <p className="rounded-xl border border-dashed border-slate-200 px-2 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-200">
+                                Your reply: {schedule.studentResponseMessage}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="mt-3 space-y-2">
+                            <textarea
+                              value={responseDrafts[schedule._id] || ""}
+                              onChange={(event) => updateResponseDraft(schedule._id, event.target.value)}
+                              rows={2}
+                              placeholder="Optional note, or required reason for decline/reschedule"
+                              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            />
+
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                disabled={Boolean(submittingResponses[schedule._id])}
+                                onClick={() => handleInterviewResponse(schedule, "accepted")}
+                                className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                type="button"
+                                disabled={Boolean(submittingResponses[schedule._id])}
+                                onClick={() => handleInterviewResponse(schedule, "reschedule_requested")}
+                                className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Request Reschedule
+                              </button>
+                              <button
+                                type="button"
+                                disabled={Boolean(submittingResponses[schedule._id])}
+                                onClick={() => handleInterviewResponse(schedule, "declined")}
+                                className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Decline
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => downloadCalendarInvite(schedule)}
+                                className="rounded-xl border border-cyan-300 px-3 py-2 text-xs font-semibold text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-950/30"
+                              >
+                                Add to Calendar
+                              </button>
+                            </div>
                           </div>
                         </article>
                       ))}
