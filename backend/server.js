@@ -53,6 +53,8 @@ app.use('/api/pro-accounts', require('./routes/p_proAccountRoutes'));
 app.use('/api/applications', require('./routes/C_applicationRoutes'));
 app.use('/api/matching', require('./routes/C_matchingRoutes'));
 app.use('/api/interviews', require('./routes/interviewScheduleRoutes'));
+app.use('/api/interview-schedules', require('./routes/interviewScheduleRoutes'));
+app.use('/api/interviewSchedule', require('./routes/interviewScheduleRoutes'));
 app.use('/api/company-tasks', require('./routes/C_taskRoutes'));
 app.use('/api/admins', require('./routes/adminRoutes'));
 app.use('/api/admin-resources', require('./routes/adminResourceRoutes'));

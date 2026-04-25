@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const STUDENT_API_URL = 'http://localhost:5000/api/students';
+const API_URL = 'http://localhost:5000/api';
 const STUDENT_SESSION_KEY = 'stepin_student_session';
 
 const normalizeStudentError = (error, fallbackMessage) => {
@@ -98,6 +99,34 @@ const getAuthHeader = () => {
     return {
         headers: { Authorization: `Bearer ${session?.token || ''}` }
     };
+};
+
+export const getStudentInterviewSchedules = async () => {
+  try {
+    const auth = getAuthHeader();
+    const endpoints = [
+      `${API_URL}/interviews/student`,
+      `${API_URL}/interview-schedules/student`,
+      `${API_URL}/interviewSchedule/student`,
+    ];
+
+    let lastError = null;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await axios.get(endpoint, auth);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (error.response?.status !== 404) {
+          throw error;
+        }
+      }
+    }
+
+    throw lastError || new Error('Interview schedule route not found');
+  } catch (error) {
+    throw normalizeStudentError(error, 'Failed to fetch interview schedules');
+  }
 };
 
 export const submitStudentReview = async (reviewData) => {

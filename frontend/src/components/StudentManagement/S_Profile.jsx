@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FaBell, FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 import { resolveUploadUrl } from "./uploadUrl";
+import { getStudentInterviewSchedules } from "./student_utils";
 
 const API_BASE_URL = "http://localhost:5000/api/profiles";
 const SKILL_FIELDS = ["frontendSkills", "backendSkills", "databaseSkills"];
@@ -35,7 +37,35 @@ const normalizeStudentProfile = (profile) => {
 function S_Profile() {
   const [student, setStudent] = useState({});
   const [cvFile, setCvFile] = useState(null);
+  const [showInterviewNotifications, setShowInterviewNotifications] = useState(false);
+  const [interviewSchedules, setInterviewSchedules] = useState([]);
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
+  const [interviewError, setInterviewError] = useState("");
   const navigate = useNavigate();
+
+  const formatInterviewDate = (dateValue) => {
+    if (!dateValue) return "Date not set";
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "Invalid date";
+
+    return date.toLocaleString("en-LK", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const upcomingInterviews = useMemo(
+    () =>
+      interviewSchedules.filter((schedule) => {
+        const date = new Date(schedule?.interviewDateTime);
+        return !Number.isNaN(date.getTime()) && date.getTime() >= Date.now();
+      }),
+    [interviewSchedules]
+  );
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -68,6 +98,25 @@ function S_Profile() {
     };
 
     loadProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadInterviewSchedules = async () => {
+      setLoadingInterviews(true);
+      setInterviewError("");
+
+      try {
+        const result = await getStudentInterviewSchedules();
+        const schedules = Array.isArray(result?.data) ? result.data : [];
+        setInterviewSchedules(schedules);
+      } catch (err) {
+        setInterviewError(err?.message || "Could not load interview notifications");
+      } finally {
+        setLoadingInterviews(false);
+      }
+    };
+
+    loadInterviewSchedules();
   }, []);
 
   const handleChange = (e) => {
@@ -189,14 +238,106 @@ function S_Profile() {
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur-md dark:border-cyan-400/10 dark:bg-slate-900/35">
-            <p className="text-xs uppercase tracking-[0.22em] text-white/70">Profile status</p>
-            <p className="mt-2 text-2xl font-bold">
-              {student._id ? "Ready to update" : "Create profile"}
-            </p>
-            <p className="mt-2 text-sm text-white/80">
-              Keep your CV and profile image polished before companies view them.
-            </p>
+          <div className="flex flex-col items-end gap-3">
+            <div className="relative w-full max-w-md">
+              <button
+                type="button"
+                onClick={() => setShowInterviewNotifications((prev) => !prev)}
+                className="ml-auto flex items-center gap-3 rounded-2xl border border-white/30 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-md backdrop-blur-md transition hover:bg-white/25 dark:border-cyan-300/20 dark:bg-slate-900/40"
+              >
+                <span className="relative inline-flex">
+                  <FaBell className="text-base" />
+                  {upcomingInterviews.length > 0 && (
+                    <span className="absolute -right-2 -top-2 min-h-5 min-w-5 rounded-full bg-rose-500 px-1 text-center text-[11px] font-bold leading-5 text-white">
+                      {upcomingInterviews.length > 9 ? "9+" : upcomingInterviews.length}
+                    </span>
+                  )}
+                </span>
+                Interview Notifications
+              </button>
+
+              {showInterviewNotifications && (
+                <div className="absolute right-0 z-20 mt-3 w-[min(92vw,26rem)] overflow-hidden rounded-3xl border border-indigo-200/70 bg-white/95 p-4 text-slate-800 shadow-[0_20px_55px_rgba(30,41,59,0.24)] backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-indigo-700 dark:text-cyan-300">
+                      Scheduled Interviews
+                    </h3>
+                    <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:bg-cyan-400/10 dark:text-cyan-300">
+                      {interviewSchedules.length} total
+                    </span>
+                  </div>
+
+                  {loadingInterviews && (
+                    <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                      Loading interview details...
+                    </p>
+                  )}
+
+                  {!loadingInterviews && interviewError && (
+                    <p className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-300">
+                      {interviewError}
+                    </p>
+                  )}
+
+                  {!loadingInterviews && !interviewError && interviewSchedules.length === 0 && (
+                    <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                      No interview schedules yet. Once a company schedules one, it will appear here.
+                    </p>
+                  )}
+
+                  {!loadingInterviews && !interviewError && interviewSchedules.length > 0 && (
+                    <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                      {interviewSchedules.map((schedule) => (
+                        <article
+                          key={schedule._id || schedule.referenceKey}
+                          className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-3 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-cyan-950/30"
+                        >
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">
+                            {schedule.internshipTitle || "Internship Interview"}
+                          </p>
+
+                          <div className="mt-2 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                            <p className="flex items-start gap-2">
+                              <FaCalendarAlt className="mt-0.5 shrink-0 text-indigo-600 dark:text-cyan-300" />
+                              <span>{formatInterviewDate(schedule.interviewDateTime)}</span>
+                            </p>
+                            <p className="flex items-start gap-2">
+                              <FaMapMarkerAlt className="mt-0.5 shrink-0 text-indigo-600 dark:text-cyan-300" />
+                              <span>
+                                {schedule.interviewType === "online" ? "Online" : "Onsite"} - {schedule.venueOrLink || "Venue/link not provided"}
+                              </span>
+                            </p>
+                            <p>
+                              Duration: <span className="font-semibold">{schedule.duration || "30 mins"}</span>
+                            </p>
+                            {schedule.internshipLocation && (
+                              <p>
+                                Internship Location: <span className="font-semibold">{schedule.internshipLocation}</span>
+                              </p>
+                            )}
+                            {schedule.notes && (
+                              <p className="rounded-xl bg-white/80 px-2 py-1 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                Note: {schedule.notes}
+                              </p>
+                            )}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="w-full rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur-md dark:border-cyan-400/10 dark:bg-slate-900/35">
+              <p className="text-xs uppercase tracking-[0.22em] text-white/70">Profile status</p>
+              <p className="mt-2 text-2xl font-bold">
+                {student._id ? "Ready to update" : "Create profile"}
+              </p>
+              <p className="mt-2 text-sm text-white/80">
+                Keep your CV and profile image polished before companies view them.
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -244,17 +244,41 @@ const C_StudentRecommendations = ({ internships }) => {
     };
 
     const openInterviewScheduler = (student) => {
+        if (!internships || internships.length === 0) {
+            const message = 'Please create an internship before scheduling interviews.';
+            setDirectError(message);
+            setError(message);
+            alert(message);
+            return;
+        }
+
         setInterviewStudent(student);
     };
 
     const handleInterviewScheduleSave = (scheduleData) => {
         if (!interviewStudent) return;
 
+        const referenceKey = scheduleData.referenceKey || getInterviewRecordKey(interviewStudent._id);
+        const internshipId = scheduleData.internshipId || selectedInternship || '';
+        const interviewDateTime = scheduleData.interviewDateTime || '';
+        const venueOrLink = String(scheduleData.venueOrLink || '').trim();
+
+        if (!referenceKey || !internshipId || !interviewDateTime || !venueOrLink) {
+            const message = 'Please complete internship, date/time, and venue/link before saving.';
+            setDirectError(message);
+            setError(message);
+            alert(message);
+            return;
+        }
+
         const persistSchedule = async () => {
             try {
                 const response = await saveInterviewSchedule({
                     ...scheduleData,
-                    internshipId: selectedInternship || scheduleData.internshipId,
+                    referenceKey,
+                    internshipId,
+                    interviewDateTime,
+                    venueOrLink,
                     source: 'direct'
                 });
 
@@ -903,8 +927,8 @@ const C_StudentRecommendations = ({ internships }) => {
             {interviewStudent && (
                 <C_InterviewShedule
                     application={{
-                        _id: getInterviewRecordKey(interviewStudent._id),
-                        internship: selectedInternship,
+                        _id: getScheduledInterviewForStudent(interviewStudent._id)?.schedule?.referenceKey || getInterviewRecordKey(interviewStudent._id),
+                        internship: selectedInternship || getScheduledInterviewForStudent(interviewStudent._id)?.schedule?.internshipId || '',
                         student: {
                             _id: interviewStudent._id,
                             name: `${interviewStudent.firstName || ''} ${interviewStudent.lastName || ''}`.trim() || interviewStudent.name || 'Student',
@@ -924,7 +948,9 @@ const C_StudentRecommendations = ({ internships }) => {
                         createdAt: new Date().toISOString(),
                         coverLetter: 'Shortlisted from Find Students page.'
                     }}
-                    existingSchedule={scheduledInterviews[getInterviewRecordKey(interviewStudent._id)]}
+                    existingSchedule={getScheduledInterviewForStudent(interviewStudent._id)?.schedule || null}
+                    internships={internships.filter((item) => item.status === 'active')}
+                    defaultSelectedInternship={selectedInternship}
                     onClose={() => setInterviewStudent(null)}
                     onSchedule={handleInterviewScheduleSave}
                 />

@@ -1,6 +1,36 @@
 import React, { useMemo, useState } from 'react';
 
-const C_InterviewShedule = ({ application, onClose, onSchedule, existingSchedule }) => {
+const C_InterviewShedule = ({
+    application,
+    onClose,
+    onSchedule,
+    existingSchedule,
+    internships = [],
+    defaultSelectedInternship = ''
+}) => {
+    const extractInternshipId = (value) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'object') {
+            return value._id || value.id || '';
+        }
+        return '';
+    };
+
+    const resolveInternshipTitle = (id) => {
+        if (!id) return 'Not available';
+
+        const matchedInternship = internships.find((internship) => internship._id === id);
+        if (matchedInternship?.title) return matchedInternship.title;
+
+        if (application?.internshipTitle) return application.internshipTitle;
+        if (application?.internship?.title) return application.internship.title;
+        if (application?.internshipId?.title) return application.internshipId.title;
+        if (existingSchedule?.internshipTitle) return existingSchedule.internshipTitle;
+
+        return 'Selected internship';
+    };
+
     const formatForDateTimeInput = (value) => {
         if (!value) return '';
 
@@ -17,6 +47,12 @@ const C_InterviewShedule = ({ application, onClose, onSchedule, existingSchedule
     };
 
     const [interviewDateTime, setInterviewDateTime] = useState(formatForDateTimeInput(existingSchedule?.interviewDateTime));
+    const [internshipId] = useState(
+        extractInternshipId(existingSchedule?.internshipId) ||
+        extractInternshipId(application?.internshipId) ||
+        extractInternshipId(application?.internship) ||
+        extractInternshipId(defaultSelectedInternship)
+    );
     const [duration, setDuration] = useState(existingSchedule?.duration || '30 mins');
     const [interviewType, setInterviewType] = useState(existingSchedule?.interviewType || 'online');
     const [venueOrLink, setVenueOrLink] = useState(existingSchedule?.venueOrLink || '');
@@ -40,6 +76,11 @@ const C_InterviewShedule = ({ application, onClose, onSchedule, existingSchedule
         e.preventDefault();
         setFormError('');
 
+        if (!internshipId) {
+            setFormError('Please select an internship for this interview.');
+            return;
+        }
+
         if (!interviewDateTime) {
             setFormError('Please select an interview date and time.');
             return;
@@ -60,7 +101,7 @@ const C_InterviewShedule = ({ application, onClose, onSchedule, existingSchedule
             _id: existingSchedule?._id || '',
             referenceKey: application?._id,
             applicationId: application?._id,
-            internshipId: application?.internshipId || application?.internship || '',
+            internshipId,
             studentId,
             studentName,
             studentEmail,
@@ -95,6 +136,13 @@ const C_InterviewShedule = ({ application, onClose, onSchedule, existingSchedule
                             <p><strong>Email:</strong> {applicant?.email || 'N/A'}</p>
                             <p><strong>Phone:</strong> {applicant?.contactNumber || 'N/A'}</p>
                             <p><strong>Status:</strong> Hired</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Internship</label>
+                        <div className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/40 text-gray-800 dark:text-slate-100">
+                            {resolveInternshipTitle(internshipId)}
                         </div>
                     </div>
 

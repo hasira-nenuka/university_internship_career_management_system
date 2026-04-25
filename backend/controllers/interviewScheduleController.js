@@ -18,17 +18,71 @@ const sendDatabaseUnavailable = (res) =>
         message: 'Database is currently unavailable. Start MongoDB or update backend/.env with a working MONGO_URI.'
     });
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const formatInterviewSchedule = (schedule) => ({
     ...schedule.toObject(),
     internship: schedule.internshipId?._id || schedule.internshipId || null,
     internshipTitle: schedule.internshipId?.title || '',
-    internshipLocation: schedule.internshipId?.location || ''
+    internshipLocation: schedule.internshipId?.location || '',
+    companyName: schedule.companyId?.companyName || '',
+    companyLogo: schedule.companyId?.logo || ''
 });
 
 const getCompanyInterviewSchedules = async (req, res) => {
     try {
         const schedules = await InterviewSchedule.find({ companyId: req.company._id, status: { $ne: 'cancelled' } })
             .populate('internshipId', 'title location')
+            .populate('companyId', 'companyName logo')
+            .sort({ interviewDateTime: 1 });
+
+        return res.json({
+            success: true,
+            count: schedules.length,
+            data: schedules.map(formatInterviewSchedule)
+        });
+    } catch (error) {
+        console.error(error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getStudentInterviewSchedules = async (req, res) => {
+    try {
+        const studentId = req.student?._id ? String(req.student._id).trim() : '';
+        const studentEmail = String(req.student?.email || '').trim();
+        const normalizedStudentEmail = studentEmail.toLowerCase();
+        const filters = [];
+
+        if (studentId) {
+            filters.push({ studentId });
+        }
+
+        if (studentEmail) {
+            filters.push({ studentEmail });
+            filters.push({ studentEmail: normalizedStudentEmail });
+            filters.push({ studentEmail: { $regex: `^${escapeRegex(studentEmail)}$`, $options: 'i' } });
+        }
+
+        if (filters.length === 0) {
+            return res.json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+
+        const schedules = await InterviewSchedule.find({
+            status: { $ne: 'cancelled' },
+            $or: filters
+        })
+            .populate('internshipId', 'title location')
+            .populate('companyId', 'companyName logo')
             .sort({ interviewDateTime: 1 });
 
         return res.json({
@@ -81,6 +135,11 @@ const saveInterviewSchedule = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid interview date and time' });
         }
 
+        const normalizedStudentId = String(studentId || '').trim();
+        const normalizedStudentEmail = String(studentEmail || '').trim().toLowerCase();
+        const normalizedStudentName = String(studentName || '').trim();
+        const normalizedStudentPhone = String(studentPhone || '').trim();
+
         const savedSchedule = await InterviewSchedule.findOneAndUpdate(
             { companyId: req.company._id, referenceKey },
             {
@@ -89,10 +148,10 @@ const saveInterviewSchedule = async (req, res) => {
                     referenceKey,
                     internshipId,
                     applicationId,
-                    studentId,
-                    studentName,
-                    studentEmail,
-                    studentPhone,
+                    studentId: normalizedStudentId,
+                    studentName: normalizedStudentName,
+                    studentEmail: normalizedStudentEmail,
+                    studentPhone: normalizedStudentPhone,
                     interviewDateTime: normalizedDate,
                     duration,
                     interviewType,
@@ -104,6 +163,7 @@ const saveInterviewSchedule = async (req, res) => {
             },
             { new: true, upsert: true, runValidators: true }
         ).populate('internshipId', 'title location');
+        await savedSchedule.populate('companyId', 'companyName logo');
 
         return res.status(201).json({
             success: true,
@@ -141,6 +201,7 @@ const updateInterviewSchedule = async (req, res) => {
         await schedule.save();
 
         await schedule.populate('internshipId', 'title location');
+        await schedule.populate('companyId', 'companyName logo');
 
         return res.json({
             success: true,
@@ -183,6 +244,7 @@ const deleteInterviewSchedule = async (req, res) => {
 
 module.exports = {
     getCompanyInterviewSchedules,
+    getStudentInterviewSchedules,
     saveInterviewSchedule,
     updateInterviewSchedule,
     deleteInterviewSchedule

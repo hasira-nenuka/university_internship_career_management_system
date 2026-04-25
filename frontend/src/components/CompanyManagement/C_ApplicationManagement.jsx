@@ -599,6 +599,8 @@ const C_ApplicationManagement = ({ internships }) => {
                 <C_InterviewShedule
                     application={interviewApplication}
                     existingSchedule={scheduledInterviews[interviewApplication._id]}
+                    internships={internships}
+                    defaultSelectedInternship={selectedInternship}
                     onClose={() => setInterviewApplication(null)}
                     onSchedule={handleInterviewScheduleSave}
                 />

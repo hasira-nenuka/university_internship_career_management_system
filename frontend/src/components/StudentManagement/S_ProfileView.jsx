@@ -1,21 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
+  FaBell,
+  FaBuilding,
   FaEnvelope,
+  FaCalendarAlt,
   FaFileAlt,
+  FaClock,
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaUserGraduate,
 } from "react-icons/fa";
 import { resolveUploadUrl } from "./uploadUrl";
+import { getStudentInterviewSchedules } from "./student_utils";
 
 const API_BASE_URL = "http://localhost:5000/api/profiles";
 
 function S_ProfileView() {
   const [student, setStudent] = useState({});
+  const [showInterviewNotifications, setShowInterviewNotifications] = useState(false);
+  const [interviewSchedules, setInterviewSchedules] = useState([]);
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
+  const [interviewError, setInterviewError] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const formatInterviewDate = (dateValue) => {
+    if (!dateValue) return "Date not set";
+
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "Invalid date";
+
+    return date.toLocaleString("en-LK", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const upcomingInterviews = useMemo(
+    () =>
+      interviewSchedules
+        .filter((schedule) => {
+          const date = new Date(schedule?.interviewDateTime);
+          return !Number.isNaN(date.getTime()) && date.getTime() >= Date.now();
+        })
+        .sort((first, second) => new Date(first.interviewDateTime) - new Date(second.interviewDateTime)),
+    [interviewSchedules]
+  );
 
   const formatList = (items) => {
     if (!Array.isArray(items) || items.length === 0) {
@@ -25,6 +61,22 @@ function S_ProfileView() {
   };
 
   useEffect(() => {
+    const loadInterviewSchedules = async () => {
+      setLoadingInterviews(true);
+      setInterviewError("");
+
+      try {
+        const result = await getStudentInterviewSchedules();
+        setInterviewSchedules(Array.isArray(result?.data) ? result.data : []);
+      } catch (error) {
+        setInterviewError(error?.message || "Could not load interview details");
+      } finally {
+        setLoadingInterviews(false);
+      }
+    };
+
+    loadInterviewSchedules();
+
     const storedProfile = JSON.parse(localStorage.getItem("student"));
     const account = JSON.parse(localStorage.getItem("studentAccount")) || storedProfile;
     if (storedProfile) setStudent(storedProfile);
@@ -106,19 +158,125 @@ function S_ProfileView() {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 text-white backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Location</p>
-              <p className="mt-2 text-lg font-bold">{student.district || "Not set"}</p>
+          <div className="flex flex-col items-stretch gap-4 sm:min-w-[22rem]">
+            <button
+              type="button"
+              onClick={() => setShowInterviewNotifications((prev) => !prev)}
+              className="ml-auto inline-flex items-center gap-3 rounded-2xl border border-white/20 bg-white/12 px-4 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur transition hover:bg-white/20"
+            >
+              <span className="relative inline-flex">
+                <FaBell className="text-base" />
+                {upcomingInterviews.length > 0 && (
+                  <span className="absolute -right-2 -top-2 min-h-5 min-w-5 rounded-full bg-rose-500 px-1 text-center text-[11px] font-bold leading-5 text-white">
+                    {upcomingInterviews.length > 9 ? "9+" : upcomingInterviews.length}
+                  </span>
+                )}
+              </span>
+              Interview Notifications
+            </button>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 text-white backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Location</p>
+                <p className="mt-2 text-lg font-bold">{student.district || "Not set"}</p>
+              </div>
+              <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 text-white backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Education</p>
+                <p className="mt-2 text-lg font-bold">{student.eduLevel || "Not set"}</p>
+              </div>
+              <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 text-white backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Preferred Field</p>
+                <p className="mt-2 text-lg font-bold">{student.preferredField || "Not set"}</p>
+              </div>
             </div>
-            <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 text-white backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Education</p>
-              <p className="mt-2 text-lg font-bold">{student.eduLevel || "Not set"}</p>
-            </div>
-            <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-4 text-white backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.24em] text-cyan-100">Preferred Field</p>
-              <p className="mt-2 text-lg font-bold">{student.preferredField || "Not set"}</p>
-            </div>
+
+            {showInterviewNotifications && (
+              <div className="rounded-[1.75rem] border border-white/30 bg-white/95 p-4 text-slate-900 shadow-[0_20px_50px_rgba(15,23,42,0.2)] backdrop-blur dark:border-slate-700 dark:bg-slate-950/95 dark:text-slate-100">
+                <div className="mb-3 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-indigo-600 dark:text-cyan-300">
+                      Interview Calendar
+                    </p>
+                    <h3 className="mt-1 text-lg font-bold">Your scheduled company interviews</h3>
+                  </div>
+                  <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-cyan-400/10 dark:text-cyan-300">
+                    {upcomingInterviews.length} upcoming
+                  </span>
+                </div>
+
+                {loadingInterviews && (
+                  <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
+                    Loading interview details...
+                  </p>
+                )}
+
+                {!loadingInterviews && interviewError && (
+                  <p className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200">
+                    {interviewError}
+                  </p>
+                )}
+
+                {!loadingInterviews && !interviewError && upcomingInterviews.length === 0 && (
+                  <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300">
+                    No upcoming interviews yet. Company schedule updates will appear here automatically.
+                  </p>
+                )}
+
+                {!loadingInterviews && !interviewError && upcomingInterviews.length > 0 && (
+                  <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                    {upcomingInterviews.map((schedule) => (
+                      <article
+                        key={schedule._id || schedule.referenceKey}
+                        className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-4 shadow-sm dark:border-slate-700 dark:from-slate-900 dark:via-slate-900 dark:to-cyan-950/35"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                              {schedule.internshipTitle || "Interview Schedule"}
+                            </p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                              {schedule.companyName || "Company"}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold text-indigo-700 shadow-sm dark:bg-slate-800 dark:text-cyan-300">
+                            {schedule.interviewType || "online"}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                          <p className="flex items-start gap-2">
+                            <FaCalendarAlt className="mt-0.5 shrink-0 text-indigo-600 dark:text-cyan-300" />
+                            <span>{formatInterviewDate(schedule.interviewDateTime)}</span>
+                          </p>
+                          <p className="flex items-start gap-2">
+                            <FaClock className="mt-0.5 shrink-0 text-indigo-600 dark:text-cyan-300" />
+                            <span>Duration: {schedule.duration || "30 mins"}</span>
+                          </p>
+                          <p className="flex items-start gap-2">
+                            <FaBuilding className="mt-0.5 shrink-0 text-indigo-600 dark:text-cyan-300" />
+                            <span>{schedule.companyName || "Company name not provided"}</span>
+                          </p>
+                          <p className="flex items-start gap-2">
+                            <FaMapMarkerAlt className="mt-0.5 shrink-0 text-indigo-600 dark:text-cyan-300" />
+                            <span>{schedule.venueOrLink || "Venue/link not provided"}</span>
+                          </p>
+                          {schedule.internshipLocation && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Internship location: {schedule.internshipLocation}
+                            </p>
+                          )}
+                          {schedule.notes && (
+                            <p className="rounded-2xl bg-white/80 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                              {schedule.notes}
+                            </p>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
