@@ -157,6 +157,9 @@ const saveInterviewSchedule = async (req, res) => {
                     interviewType,
                     venueOrLink,
                     notes,
+                    studentResponseStatus: 'pending',
+                    studentResponseMessage: '',
+                    studentRespondedAt: null,
                     status: 'scheduled',
                     source
                 }
@@ -197,7 +200,18 @@ const updateInterviewSchedule = async (req, res) => {
             req.body.interviewDateTime = normalizedDate;
         }
 
+        const shouldResetStudentResponse = ['interviewDateTime', 'duration', 'interviewType', 'venueOrLink', 'notes'].some(
+            (field) => Object.prototype.hasOwnProperty.call(req.body, field)
+        );
+
         Object.assign(schedule, req.body);
+
+        if (shouldResetStudentResponse) {
+            schedule.studentResponseStatus = 'pending';
+            schedule.studentResponseMessage = '';
+            schedule.studentRespondedAt = null;
+        }
+
         await schedule.save();
 
         await schedule.populate('internshipId', 'title location');
@@ -207,6 +221,64 @@ const updateInterviewSchedule = async (req, res) => {
             success: true,
             data: formatInterviewSchedule(schedule),
             message: 'Interview schedule updated successfully'
+        });
+    } catch (error) {
+        console.error(error);
+
+        if (isDatabaseUnavailableError(error)) {
+            return sendDatabaseUnavailable(res);
+        }
+
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const respondToInterviewSchedule = async (req, res) => {
+    try {
+        const { responseStatus, responseMessage = '' } = req.body;
+        const allowedStatuses = ['accepted', 'declined', 'reschedule_requested'];
+
+        if (!allowedStatuses.includes(responseStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid interview response status'
+            });
+        }
+
+        const schedule = await InterviewSchedule.findOne({
+            _id: req.params.id,
+            status: { $ne: 'cancelled' },
+            $or: [
+                { studentId: String(req.student?._id || '').trim() },
+                { studentEmail: String(req.student?.email || '').trim().toLowerCase() }
+            ]
+        });
+
+        if (!schedule) {
+            return res.status(404).json({ success: false, message: 'Interview schedule not found' });
+        }
+
+        const normalizedMessage = String(responseMessage || '').trim();
+
+        if ((responseStatus === 'declined' || responseStatus === 'reschedule_requested') && !normalizedMessage) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a reason for declining or requesting a reschedule'
+            });
+        }
+
+        schedule.studentResponseStatus = responseStatus;
+        schedule.studentResponseMessage = normalizedMessage;
+        schedule.studentRespondedAt = new Date();
+        await schedule.save();
+
+        await schedule.populate('internshipId', 'title location');
+        await schedule.populate('companyId', 'companyName logo');
+
+        return res.json({
+            success: true,
+            data: formatInterviewSchedule(schedule),
+            message: 'Interview response saved successfully'
         });
     } catch (error) {
         console.error(error);
@@ -247,5 +319,6 @@ module.exports = {
     getStudentInterviewSchedules,
     saveInterviewSchedule,
     updateInterviewSchedule,
-    deleteInterviewSchedule
+    deleteInterviewSchedule,
+    respondToInterviewSchedule
 };

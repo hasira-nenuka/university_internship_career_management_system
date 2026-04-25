@@ -56,6 +56,19 @@ const interviewScheduleSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    studentResponseStatus: {
+        type: String,
+        enum: ['pending', 'accepted', 'declined', 'reschedule_requested'],
+        default: 'pending'
+    },
+    studentResponseMessage: {
+        type: String,
+        default: ''
+    },
+    studentRespondedAt: {
+        type: Date,
+        default: null
+    },
     status: {
         type: String,
         enum: ['scheduled', 'completed', 'cancelled'],
